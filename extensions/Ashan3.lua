@@ -2683,7 +2683,7 @@ Mfanyan = sgs.CreateTriggerSkill{
 	can_trigger = function(self, event, room, player, data)
 		if player and player:isAlive() and player:hasSkill(self:objectName()) then
 			local death = data:toDeath()
-			if death.who:objectName() ~= player:objectName() and death.who:hasShownOneGeneral() and (player:isFriendWith(dying.who) or player:willBeFriendWith(dying.who)) and not player:isKongcheng() then
+			if death.who:objectName() ~= player:objectName() and death.who:hasShownOneGeneral() and (player:isFriendWith(death.who) or player:willBeFriendWith(death.who)) and not player:isKongcheng() then
 				if death.who:getGeneralName() ~= "Mbug" and player:inMyAttackRange(death.who) then
 					return self:objectName()
 				end
