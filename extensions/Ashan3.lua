@@ -1721,17 +1721,29 @@ Mxiangzheng = sgs.CreateTriggerSkill{
 		end
 		if choice == "xiangzheng_creat" then
 			room:broadcastSkillInvoke(self:objectName())
-			room:doLightbox("$chuangzao", 2000)
+			room:doSuperLightbox("Masha", "#Mchuangzao")
+			local log = sgs.LogMessage()
+				log.type = "#chuangzao"
+				log.from = player
+			room:sendLog(log)
 			room:setPlayerMark(player, "xiangzheng_creat", 1)
 			return true
 		elseif choice == "xiangzheng_balance" then
 			room:broadcastSkillInvoke(self:objectName())
-			room:doLightbox("$pingheng", 2000)
+			room:doSuperLightbox("Masha", "#Mpingheng")
+			local log = sgs.LogMessage()
+				log.type = "#pingheng"
+				log.from = player
+			room:sendLog(log)
 			room:setPlayerMark(player, "xiangzheng_balance", 1)
 			return true
 		else
 			room:broadcastSkillInvoke(self:objectName())
-			room:doLightbox("$miewang", 2000)
+			room:doSuperLightbox("Masha", "#Mmiewang")
+			local log = sgs.LogMessage()
+				log.type = "#miewang"
+				log.from = player
+			room:sendLog(log)
 			room:setPlayerMark(player, "xiangzheng_death", 1)
 			return true
 		end
@@ -2003,6 +2015,9 @@ sgs.LoadTranslationTable{
 	["#Mchuangzao"] = "创造",
 	["#Mpingheng"] = "平衡",
 	["#Mmiewang"] = "灭亡",
+	["#chuangzao"] = "%from 选择了“创造”模式。",
+	["#pingheng"] = "%from 选择了“平衡”模式。",
+	["#miewang"] = "%from 选择了“灭亡”模式。",
 	["$Mxiangzheng4"] = "忠诚的勇士理应受到庇护。",
 	["$Mxiangzheng5"] = "毫无价值。",
 	["$Mxiangzheng6"] = "星光灿烂。",
@@ -2011,9 +2026,6 @@ sgs.LoadTranslationTable{
 	["$Mxiangzheng9"] = "别跟暗月作对！",
 	["$Mxiangzheng10"] = "夜幕降临。",
 	["$Mxiangzheng11"] = "星空，取你性命！",
-	["$chuangzao"] = "image=image/animate/chuangzao.png",
-	["$pingheng"] = "image=image/animate/pingheng.png",
-	["$miewang"] = "image=image/animate/miewang.png",
 	[":Mxiangzheng"] = "君主技，锁定技，你拥有“亚莎之泪”。\n\n“亚莎之泪”\n锁定技，准备阶段结束时，你须选择一个新的形态（在选择前你视为拥有“创造之愿”）：\n【创造之愿】锁定技，与你势力相同/不同的其他角色在出牌阶段结束时摸/弃置X张牌（X为其在出牌阶段内使用牌的次数且最大为2）。\n【平衡之心】与你势力相同/不同的角色出牌阶段开始时，若你有手牌，你可以令其将手牌补充/弃置到与你的手牌数相同。\n【灭亡之曲】锁定技，其他势力的角色准备阶段开始时，若其体力值大于你，其进行一次判定：若为红桃，你摸一张牌；若为方块，其跳过摸牌阶段；若为梅花，其跳过出牌阶段；若为黑桃，其弃置等同于已损失体力数的手牌否则失去1点体力。",
 	["Mzhixu"] = "秩序",
 	["$Mzhixu"] = "又一轮月相开始了。",

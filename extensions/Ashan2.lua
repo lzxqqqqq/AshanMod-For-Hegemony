@@ -1581,7 +1581,7 @@ Mbaoxue = sgs.CreateTriggerSkill{
 		return ""
 	end,
 	on_cost = function(self,event,room,player,data)
-		if room:askForCard(player, "TrickCard,EquipCard", "@baoxue_invoke", data, sgs.Card_MethodDiscard) then
+		if room:askForCard(player, "TrickCard", "@baoxue_invoke", data, sgs.Card_MethodDiscard) then
 			return true
 		end
 		return false
