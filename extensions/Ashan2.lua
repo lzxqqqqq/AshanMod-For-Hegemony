@@ -993,45 +993,48 @@ Mlangzhan = sgs.CreateTriggerSkill{
 	events = {sgs.TargetChosen},
 	can_preshow = true,
 	can_trigger = function(self, event, room, player, data)
-		local kensei = room:findPlayerBySkillName(self:objectName())
-		if kensei and kensei:isAlive() then
+		if player and player:isAlive() and player:hasSkill(self:objectName()) then
 			local use = data:toCardUse()
-			if use.from and kensei:objectName() == use.from:objectName() then
-				if use.card and use.card:isKindOf("Slash") and use.to:contains(player) and not player:isKongcheng() then
-					return self:objectName(), kensei
+			if use.card and use.card:isKindOf("Slash") then
+				local targets_names = {}
+				for _,p in sgs.qlist(use.to) do
+					if not p:isKongcheng() then
+						table.insert(targets_names,p:objectName())
+					end	
+				end
+				if #targets_names > 0 then
+					return self:objectName() .. "->" .. table.concat(targets_names, "+"), player
 				end
 			end
 		end
 		return ""
 	end,
-	on_cost = function(self,event,room,player,data)
-		local kensei = room:findPlayerBySkillName(self:objectName())
+	on_cost = function(self, event, room, target, data, player)
 		local ai_data = sgs.QVariant()
-		ai_data:setValue(player)
-		if kensei:askForSkillInvoke(self:objectName(), ai_data) then
+		ai_data:setValue(target)
+		if player:askForSkillInvoke(self:objectName(), ai_data) then
 			room:broadcastSkillInvoke(self:objectName(), 1)
 			return true
 		end
 		return false
 	end,
-	on_effect = function(self,event,room,player,data)
-		local kensei = room:findPlayerBySkillName(self:objectName())
+	on_effect = function(self, event, room, target, data, player)
 		local use = data:toCardUse()
-		local id = room:askForCardChosen(kensei, player, "h", self:objectName())
-		room:showCard(player, id)
+		local id = room:askForCardChosen(player, target, "h", self:objectName())
+		room:showCard(target, id)
 		room:getThread():delay(1000)
-		local realcard = sgs.Sanguosha:getWrappedCard(id)
+		local realcard = sgs.Sanguosha	:getWrappedCard(id)
 		local x = 0
-		if kensei:getMark("@langzhan") <= 3 and realcard:getNumber() and realcard:getNumber() <= use.card:getNumber() then
-			kensei:gainMark("@langzhan")
+		if player:getMark("@langzhan") <= 3 and realcard:getNumber() and realcard:getNumber() <= use.card:getNumber() then
+			player:gainMark("@langzhan")
 			x = x+1
 		end
 		if realcard:getSuit() ~= sgs.Card_NoSuit and realcard:getSuit() == use.card:getSuit() then
-			local jink_list = kensei:getTag("Jink_"..use.card:toString()):toList()
+			local jink_list = player:getTag("Jink_"..use.card:toString()):toList()
 			local new_jink_list = sgs.VariantList()
 			local index = 0
 			for _, p in sgs.qlist(use.to) do
-				if p:objectName() == player:objectName() then
+				if p:objectName() == target:objectName() then
 					new_jink_list:append(sgs.QVariant(0))
 				else
 					new_jink_list:append(jink_list:at(index))
@@ -1039,10 +1042,10 @@ Mlangzhan = sgs.CreateTriggerSkill{
 				index = index+1
 			end
 			local jink_data = sgs.QVariant(new_jink_list)
-			kensei:setTag("Jink_" .. use.card:toString(), jink_data)
+			player:setTag("Jink_" .. use.card:toString(), jink_data)
 			local log = sgs.LogMessage()
 				log.type = "#NoJink"
-				log.from = player
+				log.from = target
 			room:sendLog(log)
 			x = x+1
 		end
@@ -1052,7 +1055,7 @@ Mlangzhan = sgs.CreateTriggerSkill{
 			room:broadcastSkillInvoke(self:objectName(), 3)
 		else
 			room:broadcastSkillInvoke(self:objectName(), 4)
-			kensei:drawCards(1)
+			player:drawCards(1)
 		end
 		return false
 	end,
@@ -2117,13 +2120,20 @@ Mbeici = sgs.CreateTriggerSkill{
 				return self:objectName()
 			end
 		elseif event == sgs.TargetChosen then
-			local shade = room:findPlayerBySkillName(self:objectName())
-			if shade and shade:isAlive() and shade:getMark("@yinni") > 0 then
-				local use = data:toCardUse()
-				if use.from and shade:objectName() == use.from:objectName() then
-					if use.card and (use.card:isKindOf("Slash") or use.card:isKindOf("Duel")) and use.to:contains(player) and not player:isNude() then
-						room:setPlayerFlag(shade, "shade_out")
-						return self:objectName(), shade
+			if player and player:isAlive() and player:hasSkill(self:objectName()) then
+				if player:getMark("@yinni") > 0 then
+					local use = data:toCardUse()
+					if use.card and (use.card:isKindOf("Slash") or use.card:isKindOf("Duel")) then
+						room:setPlayerFlag(player, "shade_out")
+						local targets_names = {}
+						for _,p in sgs.qlist(use.to) do
+							if not p:isNude() then
+								table.insert(targets_names,p:objectName())
+							end	
+						end
+						if #targets_names > 0 then
+							return self:objectName() .. "->" .. table.concat(targets_names, "+"), player
+						end
 					end
 				end
 			end
@@ -2145,7 +2155,7 @@ Mbeici = sgs.CreateTriggerSkill{
 		end
 		return ""
 	end,
-	on_cost = function(self,event,room,player,data)
+	on_cost = function(self, event, room, target, data, player)
 		if event == sgs.EventPhaseEnd then
 			if room:askForCard(player, "EquipCard|.|.|.", "@beici_invoke", data, sgs.Card_MethodDiscard) then
 				room:broadcastSkillInvoke(self:objectName(), 1)
@@ -2165,14 +2175,13 @@ Mbeici = sgs.CreateTriggerSkill{
 			room:notifySkillInvoked(player, self:objectName())
 			return true
 		elseif event == sgs.TargetChosen then
-			local shade = room:findPlayerBySkillName(self:objectName())
 			room:broadcastSkillInvoke(self:objectName(), 4)
-			room:notifySkillInvoked(shade, self:objectName())
+			room:notifySkillInvoked(player, self:objectName())
 			return true
 		end
 		return false
 	end,
-	on_effect = function(self,event,room,player,data)
+	on_effect = function(self, event, room, target, data, player)
 		if event == sgs.EventPhaseEnd then
 			room:setPlayerMark(player, "@yinni", 3)
 			room:setPlayerFlag(player, "beici_invoked")
@@ -2186,10 +2195,9 @@ Mbeici = sgs.CreateTriggerSkill{
 			data:setValue(use)
 			return false
 		elseif event == sgs.TargetChosen then
-			local shade = room:findPlayerBySkillName(self:objectName())
-			if shade and shade:isAlive() and not player:isNude() then
-				local id = room:askForCardChosen(shade, player, "he", self:objectName())
-				room:throwCard(id, player, shade)
+			if player and player:isAlive() and not target:isNude() then
+				local id = room:askForCardChosen(player, target, "he", self:objectName())
+				room:throwCard(id, target, player)
 			end
 		end
 	end,
@@ -2797,31 +2805,34 @@ Mfushi = sgs.CreateTriggerSkill{
 	relate_to_place = "deputy",
 	can_preshow = true,
 	can_trigger = function(self, event, room, player, data)
-		local scorpicore = room:findPlayerBySkillName(self:objectName())
-		if scorpicore and scorpicore:isAlive() then
+		if player and player:isAlive() and player:hasSkill(self:objectName()) then
 			local use = data:toCardUse()
-			if use.from and scorpicore:objectName() == use.from:objectName() then
-				if use.card and use.card:isKindOf("Slash") and use.to:contains(player) and player:hasEquip() then
-					return self:objectName(), scorpicore
+			if use.card and use.card:isKindOf("Slash") then
+				local targets_names = {}
+				for _,p in sgs.qlist(use.to) do
+					if p:hasEquip() then
+						table.insert(targets_names,p:objectName())
+					end	
+				end
+				if #targets_names > 0 then
+					return self:objectName() .. "->" .. table.concat(targets_names, "+"), player
 				end
 			end
 		end
 		return ""
 	end,
-	on_cost = function(self,event,room,player,data)
-		local scorpicore = room:findPlayerBySkillName(self:objectName())
+	on_cost = function(self, event, room, target, data, player)
 		local ai_data = sgs.QVariant()
-		ai_data:setValue(player)
-		if scorpicore:askForSkillInvoke(self:objectName(), ai_data) then
+		ai_data:setValue(target)
+		if player:askForSkillInvoke(self:objectName(), ai_data) then
 			room:broadcastSkillInvoke(self:objectName())
 			return true
 		end
 		return false
 	end,
-	on_effect = function(self,event,room,player,data)
-		local scorpicore = room:findPlayerBySkillName(self:objectName())
-		local id = room:askForCardChosen(scorpicore, player, "e", self:objectName())
-		room:obtainCard(player, id, true)
+	on_effect = function(self, event, room, target, data, player)
+		local id = room:askForCardChosen(player, target, "e", self:objectName())
+		room:obtainCard(target, id, true)
 	end,
 }
 Mrongjie = sgs.CreateTriggerSkill{

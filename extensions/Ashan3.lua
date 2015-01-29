@@ -2412,8 +2412,8 @@ sgs.LoadTranslationTable{
 ]]--
 Mlilim = sgs.General(Ashan3, "Mlilim", "an", 3, false)
 --[[
-【愉悦】你使用【杀】指定一名男性目标后，你可以弃置一张手牌（若你已受伤则不弃）令该角色不能使用【闪】对此【杀】进行响应，若如此做，其摸一张牌。
-*【诱惑】摸牌阶段，若你手牌数小于体力上限，你可以放弃摸牌，改为选择一个颜色并观看一名男性角色的手牌，然后你获得其所有与你所选颜色相同的手牌：若以此法获得至少三张手牌，其可以令你将武将牌叠置。
+【愉悦】你使用【杀】指定一名异性目标后，你可以弃置一张手牌（若你已受伤则不弃）令该角色不能使用【闪】对此【杀】进行响应，若如此做，其摸一张牌。
+*【诱惑】摸牌阶段，若你手牌数小于体力上限，你可以放弃摸牌，改为选择一个颜色并观看一名异性角色的手牌，然后你获得其所有与你所选颜色相同的手牌：若以此法获得至少三张手牌，其可以令你将武将牌叠置。
 ]]--
 Myuyue = sgs.CreateTriggerSkill{
 	name = "Myuyue",
@@ -2421,43 +2421,46 @@ Myuyue = sgs.CreateTriggerSkill{
 	events = {sgs.TargetChosen},
 	can_preshow = true,
 	can_trigger = function(self, event, room, player, data)
-		local lilim = room:findPlayerBySkillName(self:objectName())
-		if lilim and lilim:isAlive() then
+		if player and player:isAlive() and player:hasSkill(self:objectName()) then
 			local use = data:toCardUse()
-			if use.from and lilim:objectName() == use.from:objectName() then
-				if use.card and use.card:isKindOf("Slash") and use.to:contains(player) and player:getGender() == "male" then
-					if lilim:isWounded() or not lilim:isKongcheng() then
-						return self:objectName(), lilim
+			if use.card and use.card:isKindOf("Slash") then
+				if player:isWounded() or not player:isKongcheng() then
+					local targets_names = {}
+					for _,p in sgs.qlist(use.to) do
+						if p:getGender() ~= player:getGender() then
+							table.insert(targets_names,p:objectName())
+						end	
+					end
+					if #targets_names > 0 then
+						return self:objectName() .. "->" .. table.concat(targets_names, "+"), player
 					end
 				end
 			end
 		end
 		return ""
 	end,
-	on_cost = function(self,event,room,player,data)
-		local lilim = room:findPlayerBySkillName(self:objectName())
+	on_cost = function(self, event, room, target, data, player)
 		local ai_data = sgs.QVariant()
-		ai_data:setValue(player)
-		if lilim:askForSkillInvoke(self:objectName(), ai_data) then
+		ai_data:setValue(target)
+		if player:askForSkillInvoke(self:objectName(), ai_data) then
 			return true
 		end
 		return false
 	end,
-	on_effect = function(self,event,room,player,data)
+	on_effect = function(self, event, room, target, data, player)
 		local use = data:toCardUse()
-		local lilim = room:findPlayerBySkillName(self:objectName())
-		if lilim:isWounded() then
+		if player:isWounded() then
 			room:broadcastSkillInvoke(self:objectName(), 2)
 		else
-			local id = room:askForExchange(lilim, self:objectName(), 1, false, "yuyue_throw"):getSubcards():first()
+			local id = room:askForExchange(player, self:objectName(), 1, false, "yuyue_throw"):getSubcards():first()
 			room:broadcastSkillInvoke(self:objectName(), 1)
-			room:throwCard(id, lilim, lilim)
+			room:throwCard(id, player, player)
 		end
-		local jink_list = lilim:getTag("Jink_"..use.card:toString()):toList()
+		local jink_list = player:getTag("Jink_"..use.card:toString()):toList()
 		local new_jink_list = sgs.VariantList()
 		local index = 0
 		for _, p in sgs.qlist(use.to) do
-			if p:objectName() == player:objectName() then
+			if p:objectName() == target:objectName() then
 				new_jink_list:append(sgs.QVariant(0))
 			else
 				new_jink_list:append(jink_list:at(index))
@@ -2465,12 +2468,12 @@ Myuyue = sgs.CreateTriggerSkill{
 			index = index+1
 		end
 		local jink_data = sgs.QVariant(new_jink_list)
-		lilim:setTag("Jink_" .. use.card:toString(), jink_data)
+		player:setTag("Jink_" .. use.card:toString(), jink_data)
 		local log = sgs.LogMessage()
 			log.type = "#NoJink"
-			log.from = player
+			log.from = target
 		room:sendLog(log)
-		player:drawCards(1)
+		target:drawCards(1)
 	end,
 }
 Myouhuo = sgs.CreateTriggerSkill{
@@ -2483,7 +2486,7 @@ Myouhuo = sgs.CreateTriggerSkill{
 			if player:getPhase() == sgs.Player_Draw and player:getHandcardNum() < player:getMaxHp() then
 				local targets = sgs.SPlayerList()
 				for _,p in sgs.qlist(room:getOtherPlayers(player)) do
-					if p:getGender() == "male" and not p:isKongcheng() then
+					if p:getGender() ~= player:getGender() and not p:isKongcheng() then
 						targets:append(p)
 					end
 				end
@@ -2505,7 +2508,7 @@ Myouhuo = sgs.CreateTriggerSkill{
 		choice = room:askForChoice(player, self:objectName(), "youhuo_red+youhuo_black", data)
 		local targets = sgs.SPlayerList()
 		for _,p in sgs.qlist(room:getOtherPlayers(player)) do
-			if p:getGender() == "male" and not p:isKongcheng() then
+			if p:getGender() ~= player:getGender() and not p:isKongcheng() then
 				targets:append(p)
 			end
 		end
@@ -2559,7 +2562,7 @@ sgs.LoadTranslationTable{
 	["yuyue_throw"] = "请弃置一张手牌。",
 	["$Myuyue1"] = "我喜欢你抵抗的样子。",
 	["$Myuyue2"] = "多么美妙的痛苦呀~",
-	[":Myuyue"] = "你使用【杀】指定一名男性目标后，你可以弃置一张手牌（若你已受伤则不弃）令该角色不能使用【闪】对此【杀】进行响应，若如此做，其摸一张牌。",
+	[":Myuyue"] = "你使用【杀】指定一名异性目标后，你可以弃置一张手牌（若你已受伤则不弃）令该角色不能使用【闪】对此【杀】进行响应，若如此做，其摸一张牌。",
 	["Myouhuo"] = "诱惑",
 	["youhuo_effect"] = "诱惑",
 	["$Myouhuo1"] = "我真喜欢你挣扎的样子~",
@@ -2570,7 +2573,7 @@ sgs.LoadTranslationTable{
 	["youhuo_black"] = "黑丝诱惑",
 	["youhuo_yes"] = "推倒她",
 	["youhuo_no"] = "不推倒",
-	[":Myouhuo"] = "摸牌阶段，若你手牌数小于体力上限，你可以放弃摸牌，改为选择一个颜色并观看一名男性角色的手牌，然后你获得其所有与你所选颜色相同的手牌：若以此法获得至少三张手牌，其可以令你将武将牌叠置。",	
+	[":Myouhuo"] = "摸牌阶段，若你手牌数小于体力上限，你可以放弃摸牌，改为选择一个颜色并观看一名异性角色的手牌，然后你获得其所有与你所选颜色相同的手牌：若以此法获得至少三张手牌，其可以令你将武将牌叠置。",	
 	["~Mlilim"] = "这是名为死亡的痛苦。",
 	["cv:Mlilim"] = "痛苦女王",
 	["illustrator:Mlilim"] = "英雄无敌6",
@@ -3128,12 +3131,17 @@ Mbaoxing = sgs.CreateTriggerSkill{
 	can_preshow = true,
 	can_trigger = function(self, event, room, player, data)
 		if event == sgs.TargetChosen then
-			local ravager = room:findPlayerBySkillName(self:objectName())
-			if ravager and ravager:isAlive() and ravager:getLostHp() > 1 then
+			if player and player:isAlive() and player:hasSkill(self:objectName()) and player:getLostHp() > 1 then
 				local use = data:toCardUse()
-				if use.from and ravager:objectName() == use.from:objectName() then
-					if use.card and use.card:isKindOf("Slash") and use.to:contains(player) and not player:isNude() then
-						return self:objectName(), ravager
+				if use.card and use.card:isKindOf("Slash") then
+					local targets_names = {}
+					for _,p in sgs.qlist(use.to) do
+						if not p:isNude() then
+							table.insert(targets_names,p:objectName())
+						end	
+					end
+					if #targets_names > 0 then
+						return self:objectName() .. "->" .. table.concat(targets_names, "+"), player
 					end
 				end
 			end
@@ -3180,13 +3188,12 @@ Mbaoxing = sgs.CreateTriggerSkill{
 		end
 		return ""
 	end,
-	on_cost = function(self,event,room,player,data)
+	on_cost = function(self, event, room, target, data, player)
 		if event == sgs.TargetChosen then
-			local ravager = room:findPlayerBySkillName(self:objectName())
 			local ai_data = sgs.QVariant()
-			ai_data:setValue(player)
-			if ravager:hasShownSkill(self) or ravager:askForSkillInvoke("Mbaoxing1", ai_data) then
-				room:notifySkillInvoked(ravager, self:objectName())
+			ai_data:setValue(target)
+			if player:hasShownSkill(self) or player:askForSkillInvoke("Mbaoxing1", ai_data) then
+				room:notifySkillInvoked(player, self:objectName())
 				return true
 			end
 		elseif event == sgs.Damaged then
@@ -3197,13 +3204,12 @@ Mbaoxing = sgs.CreateTriggerSkill{
 		end
 		return false
 	end,
-	on_effect = function(self,event,room,player,data)
+	on_effect = function(self, event, room, target, data, player)
 		if event == sgs.TargetChosen then
-			if player:isNude() then return false end
-			local ravager = room:findPlayerBySkillName(self:objectName())
+			if target:isNude() then return false end
 			room:broadcastSkillInvoke(self:objectName(), 2)
-			local id = room:askForCardChosen(ravager, player, "he", self:objectName())
-			room:throwCard(id, player, ravager)
+			local id = room:askForCardChosen(player, target, "he", self:objectName())
+			room:throwCard(id, target, player)
 		elseif event == sgs.Damaged then
 			player:drawCards(1)
 			local damage = data:toDamage()
