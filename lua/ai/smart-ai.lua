@@ -291,9 +291,13 @@ function SmartAI:getTurnUse()
 	for _ ,c in sgs.qlist(self.player:getHandcards()) do
 		if c:isAvailable(self.player) then table.insert(cards, c) end
 	end
-	for _, id in sgs.qlist(self.player:getPile("wooden_ox")) do
-		local c = sgs.Sanguosha:getCard(id)
-		if c:isAvailable(self.player) then table.insert(cards, c) end
+	for _,pile in sgs.list(self.player:getPileNames())do
+		if pile:startsWith("&") or pile == "wooden_ox" then
+			for _, id in sgs.qlist(self.player:getPile(pile)) do
+				local c = sgs.Sanguosha:getCard(id)
+				if c:isAvailable(self.player) then table.insert(cards, c) end
+			end
+		end
 	end
 
 	local turnUse = {}
@@ -647,7 +651,7 @@ function sgs.outputKingdomValues(player, level, sendLog)
 	for _, kingdom in ipairs(sgs.KingdomsTable) do
 		msg = msg .. string.upper(string.sub(kingdom, 1, 1)) .. string.sub(kingdom, 2) .. sgs.current_mode_players[kingdom] .. " "
 	end
-	global_room:writeToConsole(msg)
+--	global_room:writeToConsole(msg)    M&M 防止服务器刷新ai信息
 
 	--[[if sendLog then
 		local log = sgs.LogMessage()
@@ -755,8 +759,11 @@ function sgs.getDefense(player)
 	if player:getDefensiveHorse() then defense = defense + 0.5 end
 
 	if player:hasTreasure("JadeSeal") then defense = defense + 2 end
-	if player:hasTreasure("WoodenOx") then defense = defense + player:getPile("wooden_ox"):length() end
-
+	for _,pile in sgs.list(player:getPileNames())do
+		if pile:startsWith("&") or pile == "wooden_ox" then
+			defense = defense + player:getPile(pile):length()
+		end
+	end
 	if hasEightDiagram then
 		if player:hasShownSkill("tiandu") then defense = defense + 1 end
 		if player:hasShownSkill("leiji") then defense = defense + 1 end
@@ -815,6 +822,9 @@ function sgs.getDefense(player)
 	if not player:faceUp() then defense = defense - 0.5 end
 	if player:containsTrick("indulgence") then defense = defense - 0.5 end
 	if player:containsTrick("supply_shortage") then defense = defense - 0.5 end
+	
+	if player:hasShownSkills("qingguo+yiji|duoshi+xiaoji|jijiu+qianhuan|yiji+ganglie") then defense = defense + 2 end 
+	if player:hasShownSkills("yiji+qiaobiao|xiaoji+zhiheng|buqu+yinghun_sunjian|luoshen+guicai") then defense = defense + 1.5 end 
 
 	if global_room:getCurrent() then
 		defense = defense + (player:aliveCount() - (player:getSeat() - global_room:getCurrent():getSeat()) % player:aliveCount()) / 4
@@ -967,9 +977,13 @@ function SmartAI:writeKeepValue(card)
 		elseif card:isKindOf("JadeSeal") then value = 5
 		elseif card:isKindOf("WoodenOx") then
 			value = 3.19
-			for _, id in sgs.qlist(self.player:getPile("wooden_ox")) do
-				local c = sgs.Sanguosha:getCard(id)
-				value = value + (sgs.ai_keep_value[c:getClassName()] or 0)
+			for _,pile in sgs.list(self.player:getPileNames())do
+				if pile:startsWith("&") or pile == "wooden_ox" then
+					for _, id in sgs.qlist(self.player:getPile(pile)) do
+						local c = sgs.Sanguosha:getCard(id)
+						value = value + (sgs.ai_keep_value[c:getClassName()] or 0)
+					end
+				end
 			end
 		else value = 3.19
 		end
@@ -1069,11 +1083,14 @@ function SmartAI:adjustKeepValue(card, v)
 		if self.player:hasSkill("jiang") and card:isRed() then v = v + 0.04 end
 	elseif card:isKindOf("HegNullification") then v = v + 0.02
 	end
-
-	if self.player:getPile("wooden_ox"):contains(card:getEffectiveId()) then
-		v = v - 0.1
+	for _,pile in sgs.list(self.player:getPileNames())do
+		if pile:startsWith("&") or pile == "wooden_ox" then
+			if self.player:getPile(pile):contains(card:getEffectiveId()) then
+				v = v - 0.1
+			end
+		end
 	end
-
+	
 	local suits_value = {}
 	for index,suit in ipairs(suits) do
 		suits_value[suit] = index * 2
@@ -1124,9 +1141,12 @@ function SmartAI:getUseValue(card)
 	if self.player:hasSkills(sgs.need_kongcheng) then
 		if self.player:getHandcardNum() == 1 then v = 10 end
 	end
-
-	if self.player:getPile("wooden_ox"):contains(card:getEffectiveId()) then
-		v = v + 1
+	for _,pile in sgs.list(self.player:getPileNames())do
+		if pile:startsWith("&") or pile == "wooden_ox" then
+			if self.player:getPile(pile):contains(card:getEffectiveId()) then
+				v = v + 1
+			end
+		end
 	end
 
 	if card:isKindOf("HalberdCard") then v = v + 20 end
@@ -1204,9 +1224,12 @@ function SmartAI:adjustUsePriority(card, v)
 	end
 
 	if card:isKindOf("HalberdCard") then v = v + 1 end
-
-	if self.player:getPile("wooden_ox"):contains(card:getEffectiveId()) then
-		v = v + 0.1
+	for _,pile in sgs.list(self.player:getPileNames())do
+		if pile:startsWith("&") or pile == "wooden_ox" then
+			if self.player:getPile(pile):contains(card:getEffectiveId()) then
+				v = v + 0.1
+			end
+		end
 	end
 
 	local suits_value = {}
@@ -2209,7 +2232,7 @@ function SmartAI:askForNullification(trick, from, to, positive)
 			end
 		elseif trick:isKindOf("Indulgence") then
 			if self:isFriend(to) and not to:isSkipped(sgs.Player_Play) then
-				if to:hasShownSkill("Mlingyun") then return nil end--【M&M】相关
+				if to:hasShownSkill("Mlingyun") then return nil end  --【M&M】相关
 				if (to:hasShownSkill("guanxing") or to:hasShownSkill("yizhi") and to:inDeputySkills("yizhi"))
 					and (global_room:alivePlayerCount() > 4 or to:hasShownSkill("yizhi")) then return end
 				if to:getHp() - to:getHandcardNum() >= 2 then return nil end
@@ -3041,6 +3064,7 @@ function SmartAI:askForPindian(requestor, reason)
 		if self[reason .. "_card"] then
 			return sgs.Sanguosha:getCard(self[reason .. "_card"])
 		else
+--			self.room:writeToConsole("Pindian card for " .. reason .. " not found!!")  M&M 去除拼点时的无用提示
 			return self:getMaxCard(self.player):getId()
 		end
 	end
@@ -3325,7 +3349,7 @@ function SmartAI:needRetrial(judge)
 			if self.player:objectName() == who:objectName() then
 				return not self:isWeak()
 			else
-				return not judge:isGood()
+				return not judge:isGood() and not who:hasShownSkill("tiandu")
 			end
 		else
 			return judge:isGood()
@@ -3476,7 +3500,7 @@ function SmartAI:damageIsEffective_(damageStruct)
 	if to:hasArmorEffect("PeaceSpell") and nature ~= sgs.DamageStruct_Normal then return false end
 	if to:hasShownSkills("jgyuhuo_pangtong|jgyuhuo_zhuque") and nature == sgs.DamageStruct_Fire then return false end
 	if to:getMark("@fog") > 0 and nature ~= sgs.DamageStruct_Thunder then return false end
-	if to:hasArmorEffect("Breastplate") and damage >= to:getHp() then return false end
+	if to:hasArmorEffect("Breastplate") and (damage > to:getHp() or (to:getHp() > 1 and damage == to:getHp())) then return false end
 
 	for _, callback in pairs(sgs.ai_damage_effect) do
 		if type(callback) == "function" then
@@ -3635,8 +3659,12 @@ function SmartAI:getKnownNum(player, observer)
 		return self.player:getHandcardNum()
 	else
 		local cards = player:getHandcards()
-		for _, id in sgs.qlist(player:getPile("wooden_ox")) do
-			cards:append(sgs.Sanguosha:getCard(id))
+		for _,pile in sgs.list(player:getPileNames())do
+			if pile:startsWith("&") or pile == "wooden_ox" then
+				for _, id in sgs.qlist(player:getPile(pile)) do
+					cards:append(sgs.Sanguosha:getCard(id))
+				end
+			end
 		end
 		local known = 0
 		for _, card in sgs.qlist(cards) do
@@ -3651,8 +3679,12 @@ end
 function getKnownNum(player, observer)
 	if not player then global_room:writeToConsole(debug.traceback()) return end
 	local cards = player:getHandcards()
-	for _, id in sgs.qlist(player:getPile("wooden_ox")) do
-		cards:append(sgs.Sanguosha:getCard(id))
+	for _,pile in sgs.list(player:getPileNames())do
+		if pile:startsWith("&") or pile == "wooden_ox" then
+			for _, id in sgs.qlist(player:getPile(pile)) do
+				cards:append(sgs.Sanguosha:getCard(id))
+			end
+		end
 	end
 	local known = 0
 	for _, card in sgs.qlist(cards) do
@@ -3670,8 +3702,12 @@ function getKnownCard(player, from, class_name, viewas, flags, return_table)
 	if not player then global_room:writeToConsole(debug.traceback()) return 0 end
 	local cards = player:getCards(flags)
 	if flags:match("h") then
-		for _, id in sgs.qlist(player:getPile("wooden_ox")) do
-			cards:append(sgs.Sanguosha:getCard(id))
+		for _,pile in sgs.list(player:getPileNames())do
+			if pile:startsWith("&") or pile == "wooden_ox" then
+				for _, id in sgs.qlist(player:getPile(pile)) do
+					cards:append(sgs.Sanguosha:getCard(id))
+				end
+			end
 		end
 	end
 	local suits = {["club"] = 1, ["spade"] = 1, ["diamond"] = 1, ["heart"] = 1}
@@ -3723,8 +3759,16 @@ function SmartAI:getCardId(class_name, acard)
 			viewascard = sgs.Card_Parse(viewas)
 			assert(viewascard)
 		end
+		local isInPile = function(id)
+			for _,pile in sgs.list(self.player:getPileNames())do
+				if pile:startsWith("&") or pile == "wooden_ox" then
+					if self.player:getPile(pile):contains(id) then return true end
+				end
+			end
+			return false
+		end
 		local isCard = card:isKindOf(class_name) and not prohibitUseDirectly(card, self.player)
-						and (card_place ~= sgs.Player_PlaceSpecial or self.player:getPile("wooden_ox"):contains(card:getEffectiveId()))
+						and (card_place ~= sgs.Player_PlaceSpecial or isInPile(card:getEffectiveId()))
 		if viewas then
 			if isCard and self:adjustUsePriority(card, 0) >= self:adjustUsePriority(viewascard, 0) then
 				table.insert(cardArr, card)
@@ -3772,11 +3816,14 @@ function SmartAI:getCards(class_name, flag)
 			end
 		end
 	elseif flag:match("h") then
-		for _, id in sgs.qlist(self.player:getPile("wooden_ox")) do
-			all_cards:append(sgs.Sanguosha:getCard(id))
+		for _,pile in sgs.list(self.player:getPileNames())do
+			if pile:startsWith("&") or pile == "wooden_ox" then
+				for _, id in sgs.qlist(self.player:getPile(pile)) do
+					all_cards:append(sgs.Sanguosha:getCard(id))
+				end
+			end
 		end
 	end
-
 	local cards, other = {}, {}
 	local card_place, card_str
 
@@ -3824,8 +3871,12 @@ function getCardsNum(class_name, player, from)
 	end
 
 	local cards = sgs.QList2Table(player:getHandcards())
-	for _, id in sgs.qlist(player:getPile("wooden_ox")) do
-		table.insert(cards, sgs.Sanguosha:getCard(id))
+	for _,pile in sgs.list(player:getPileNames())do
+		if pile:startsWith("&") or pile == "wooden_ox" then
+			for _, id in sgs.qlist(player:getPile(pile)) do
+				table.insert(cards, sgs.Sanguosha:getCard(id))
+			end
+		end
 	end
 	local num = 0
 	local shownum = 0
@@ -4427,6 +4478,7 @@ function SmartAI:hasTrickEffective(card, to, from)
 		end
 	end  --【挑战】
 	if from:hasSkill("Mlingbo") and card:isKindOf("Lightning") then return false end  --【凌波】
+	if to:hasShownSkill("Mlingyun") and (card:isKindOf("Indulgence") or card:isKindOf("SupplyShortage")) then return false end  --【凌云】
 	if to:hasShownSkill("Mlingyun") and from:objectName() ~= to:objectName() and card:isKindOf("TrickCard") and card:isNDTrick() then return false end  --【凌云】
 	if from:hasShownOneGeneral() and to:hasShownOneGeneral() and card:isKindOf("GodSalvation") or card:isKindOf("AmazingGrace") and from:aliveCount() > 1 then
 		local shalassa
@@ -5417,7 +5469,7 @@ function SmartAI:willShowForAttack()
 	end
 	if firstShowReward and showRate > 0.9 then return true end
 
-	if showRate < 0.8 then return false end
+	if showRate < 0.9 then return false end
 	if e < f or eAtt <= 0 then return false end
 
 return true

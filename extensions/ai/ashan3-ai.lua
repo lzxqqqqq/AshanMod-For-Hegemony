@@ -836,22 +836,8 @@ end
 ]]--
 --混沌（无需ai）
 --循环
-sgs.ai_skill_cardask["@xunhuan_invoke1"] = function(self, data)
-	local has_card
-	local cards = sgs.QList2Table(self.player:getCards("h"))
-	self:sortByUseValue(cards, true)
-	for _,cd in ipairs(cards) do
-		if cd:isKindOf("BasicCard") and not (cd:isKindOf("Peach") and self:isWeak(self.player)) then
-			has_card = cd
-			break
-		end
-	end
-	if has_card then
-		return "$" .. has_card:getEffectiveId()
-	end
-	return "."
-end
-sgs.ai_skill_cardask["@xunhuan_invoke2"] = function(self, data)
+sgs.ai_skill_invoke["Mxunhuan"] = true
+sgs.ai_skill_cardask["@xunhuan_invoke"] = function(self, data)
 	local target = data:toPlayer()
 	if target:hasShownOneGeneral() and not self.player:isFriendWith(target) and target:getHandcardNum() < 2 then return "." end
 	local has_card

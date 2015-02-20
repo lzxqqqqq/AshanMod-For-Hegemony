@@ -1310,10 +1310,12 @@ void ServerPlayer::showGeneral(bool head_general, bool trigger_event, bool sendL
 
         foreach (ServerPlayer *p, room->getOtherPlayers(this, true))
             room->notifyProperty(p, this, "head_skin_id");
+		// M&M 从这里开始添加	
+		bool false_lord = false; // 在最先定义假君主的概念
 
         if (!hasShownGeneral2()) {
             QString kingdom = room->getMode() == "custom_scenario" ? getKingdom() : getGeneral()->getKingdom();
-            // M&M 争锋模式相关
+            // 争锋模式相关
 			QStringList kingdoms = Sanguosha->getKingdoms();
 			foreach (QString kd, kingdoms){
 				if (getMark(kd) > 0){ // 争锋模式的势力改变
@@ -1323,6 +1325,7 @@ void ServerPlayer::showGeneral(bool head_general, bool trigger_event, bool sendL
 				}
 			}
             room->setPlayerProperty(this, "kingdom", kingdom);
+            room->broadcastProperty(this, "kingdom"); // 再强调一次势力
 
             QString role = HegemonyMode::GetMappedRole(kingdom);
             int i = 1;
@@ -1341,7 +1344,6 @@ void ServerPlayer::showGeneral(bool head_general, bool trigger_event, bool sendL
             }
 			else {
 				if (getMark("@zhengfeng_lord") == 0) { // 争锋模式中第二名君主变为野心家
-					bool false_lord = false;
 					foreach (ServerPlayer *p, room->getOtherPlayers(this, true)) {
 						if (p->getKingdom() == kingdom) {
 							if ((p->getGeneral()->isLord() || p->getMark("@zhengfeng_lord") > 0) && p->getRole() != "careerist") {
@@ -1359,11 +1361,12 @@ void ServerPlayer::showGeneral(bool head_general, bool trigger_event, bool sendL
 				room->setPlayerMark(this, "zhengfeng_careerist", 0);
 				role = "careerist";
 			}
-            //
+			
             room->setPlayerProperty(this, "role", role);
+            room->broadcastProperty(this, "role"); // 再强调一次身份
         }
 
-        if (isLord()) {
+        if (isLord() && !false_lord && getMark("@zhengfeng_lord") == 0) { // 此处防止第二君主武将出现刷新所有武将势力
             QString kingdom = getKingdom();
             foreach (ServerPlayer *p, room->getPlayers()) {
                 if (p->getKingdom() == kingdom && p->getRole() == "careerist"){
@@ -1372,6 +1375,7 @@ void ServerPlayer::showGeneral(bool head_general, bool trigger_event, bool sendL
                 }
             }
         }
+		// 结束
     } else {
         if (getGeneral2Name() != "anjiang") return;
 

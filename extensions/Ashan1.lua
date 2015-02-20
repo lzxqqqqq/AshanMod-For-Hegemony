@@ -724,7 +724,7 @@ Mguangsu = sgs.CreateTriggerSkill{
 	end,
 	on_cost = function(self,event,room,player,data)
 		if player:askForSkillInvoke(self:objectName(), data) then
-			if player:getMark("liming") == 1 then
+			if player:getMark("@liming") > 0 then
 				room:broadcastSkillInvoke("Mliming", 4)
 			else
 				room:broadcastSkillInvoke(self:objectName())
@@ -906,9 +906,8 @@ Mcrusader:addCompanion("Mcelestial")
 --[[
 【冲锋】锁定技，当你使用【杀】对目标角色造成一次伤害时，若其与你的距离大于1，此伤害+1。
 【荣光】副将技，当你处于濒死状态时，其他你所在队列里的角色可以弃置一张手牌并失去1点体力，令你回复1点体力。
-【神驹】主将技，锁定技，此武将牌上单独的阴阳鱼个数-1。主将技，锁定技，若你装备区有防御马，你与其他角色距离-1，摸牌阶段你额外摸一张牌。主将技，锁定技，若你装备区有进攻马，其他角色与你距离+1，你的手牌上限+2。
+【神驹】主将技，锁定技，若你装备区有防御马，你与其他角色距离-1，摸牌阶段你额外摸一张牌。主将技，锁定技，若你装备区有进攻马，其他角色与你距离+1，你的手牌上限+2。
 ]]--
-Mcrusader:setHeadMaxHpAdjustedValue(-1)
 Mchongfeng = sgs.CreateTriggerSkill{
 	name = "Mchongfeng",
 	frequency = sgs.Skill_Compulsory,
@@ -1048,7 +1047,7 @@ sgs.LoadTranslationTable{
 	["$Mshenju"] = "时刻准备！",
 	["#Mshenju_distance"] = "神驹",
 	["#Mshenju_max"] = "神驹",
-	[":Mshenju"] = "主将技，锁定技，此武将牌上单独的阴阳鱼个数-1。主将技，锁定技，若你装备区有防御马，你与其他角色距离-1，摸牌阶段你额外摸一张牌。主将技，锁定技，若你装备区有进攻马，其他角色与你距离+1，你的手牌上限+2。",
+	[":Mshenju"] = "主将技，锁定技，若你装备区有防御马，你与其他角色距离-1，摸牌阶段你额外摸一张牌。主将技，锁定技，若你装备区有进攻马，其他角色与你距离+1，你的手牌上限+2。",
 	["~Mcrusader"] = "骑士……陨落了！",
 	["cv:Mcrusader"] = "混沌骑士",
 	["illustrator:Mcrusader"] = "英雄无敌6",
@@ -1397,32 +1396,30 @@ Mguangyao = sgs.CreateTriggerSkill{
 Mliming = sgs.CreateTriggerSkill{
 	name = "Mliming",  
 	frequency = sgs.Skill_Compulsory,
-	events = {sgs.BuryVictim},
-	priority = -1,
+	events = {sgs.Death},
 	relate_to_place = "head",
 	can_preshow = true,
 	can_trigger = function(self, event, room, player, data)
-		local michael =  room:findPlayerBySkillName(self:objectName())
-		if michael and michael:isAlive() and michael:getMark("liming") == 0 then
-			if player:objectName() ~= michael:objectName() and (michael:isFriendWith(player) or michael:willBeFriendWith(player)) then
+		if player and player:isAlive() and player:hasSkill(self:objectName()) and player:getMark("liming") == 0 then
+			local death = data:toDeath()
+			if death.who:objectName() ~= player:objectName() and death.who:hasShownOneGeneral() and (player:isFriendWith(death.who) or player:willBeFriendWith(death.who)) then
 				local alone = true
 				for _,p in sgs.qlist(room:getOtherPlayers(player)) do
-					if p:hasShownOneGeneral() and player:isFriendWith(p) and p:objectName() ~= michael:objectName() then
+					if p:hasShownOneGeneral() and player:isFriendWith(p) and p:objectName() ~= death.who:objectName() then
 						alone = false
 						break
 					end
 				end
 				if alone then
-					return self:objectName(), michael
+					return self:objectName()
 				end
 			end
 		end
 		return ""
 	end,
 	on_cost = function(self,event,room,player,data)
-		local michael =  room:findPlayerBySkillName(self:objectName())
-		if michael:hasShownSkill(self) or michael:askForSkillInvoke(self:objectName(), data) then
-			room:setPlayerMark(michael, "liming", 1)
+		if player:hasShownSkill(self) or player:askForSkillInvoke(self:objectName(), data) then
+			room:setPlayerMark(player, "liming", 1)
 			room:broadcastSkillInvoke(self:objectName(), 1)
 			room:doSuperLightbox("Mmichael", self:objectName())
 			return true
@@ -1430,22 +1427,21 @@ Mliming = sgs.CreateTriggerSkill{
 		return false
 	end,
 	on_effect = function(self,event,room,player,data)
-		local michael =  room:findPlayerBySkillName(self:objectName())
 		local x = player:getMaxHp() - player:getHp()
 		local recover = sgs.RecoverStruct()
 			recover.recover = x
 		room:recover(player, recover)
-		michael:drawCards(3)
-		if not michael:hasSkill("yingzi") then
-			room:handleAcquireDetachSkills(michael, "yingzi")
+		player:drawCards(3)
+		if not player:hasSkill("yingzi") then
+			room:handleAcquireDetachSkills(player, "yingzi")
 		end
-		if not michael:hasSkill("Mguangsu") then
-			room:handleAcquireDetachSkills(michael, "Mguangsu")
+		if not player:hasSkill("Mguangsu") then
+			room:handleAcquireDetachSkills(player, "Mguangsu")
 		end
-		if not michael:hasSkill("Mchongfeng") then
-			room:handleAcquireDetachSkills(michael, "Mchongfeng")
+		if not player:hasSkill("Mchongfeng") then
+			room:handleAcquireDetachSkills(player, "Mchongfeng")
 		end
-		michael:gainMark("@liming", 7)
+		player:gainMark("@liming", 7)
 	end,
 }
 Mliming_effect = sgs.CreateTriggerSkill{
@@ -1466,8 +1462,10 @@ Mliming_effect = sgs.CreateTriggerSkill{
 	end,
 	on_effect = function(self,event,room,player,data)
 		if player:getMark("@liming") > 0 then
-			room:broadcastSkillInvoke("Mliming", 2)
 			player:loseMark("@liming", 1)
+			if player:getMark("@liming") < 4 then
+				room:broadcastSkillInvoke("Mliming", 2)
+			end
 		else
 			room:broadcastSkillInvoke("Mliming", 3)
 			room:doLightbox("$limingdeath", 2000)
@@ -1738,7 +1736,7 @@ Myinxue = sgs.CreateTriggerSkill{
 			local log = sgs.LogMessage()
 				log.type = "#yinxue"
 				log.from = player
-				log.arg1 = x
+				log.arg = x
 				log.arg2 = self:objectName()
 			room:sendLog(log)
 			damage.damage = damage.damage + x
@@ -1843,7 +1841,7 @@ sgs.LoadTranslationTable{
 	["$Myinxue2"] = "你的血我拿下了！",
 	["$Myinxue3"] = "（愤愤声）",
 	["@yinxue"] = "饮血",
-	["#yinxue"] = "由于 %arg2 的效果，%from 造成的伤害+ %arg1 。",
+	["#yinxue"] = "由于 %arg2 的效果，%from 造成的伤害+ %arg 。",
 	[":Myinxue"] = "锁定技，你的回合外，当你受到1点伤害时，你获得1枚“饮血”标记；出牌阶段，你使用【杀】造成的第一次伤害+X（X为当前“饮血”标记数且最大为3）；结束阶段开始时，你移除所有“饮血”标记。",
 	["Mdaofeng"] = "蹈锋",
 	["$Mdaofeng1"] = "袭击他们。",
@@ -2297,8 +2295,8 @@ Mdream = sgs.General(Ashan1, "Mdream", "ying", 4)
 Mdream:addCompanion("Mfury")
 Mdream:addCompanion("Mcentaur")
 --[[
-*【天地】其他角色使用非延时锦囊（【无懈可击】除外）时，你可以将一张相同花色的非装备牌置于你的武将牌上称为“天地”，然后使之无效；你的回合外，任意非延时锦囊结算后进入弃牌堆后，你可以用一张相同颜色的“天地”替换之。
-*【传承】主将技，与你相同势力的其他角色摸牌阶段开始时，其可以交给你一张手牌，若此时你的手牌数大于体力上限，你须将一张手牌交给该角色。
+*【天地】其他角色使用非延时锦囊（【无懈可击】除外）时，你可以将一张相同花色的非装备牌置于你的武将牌上称为“天地”，然后使该锦囊无效；若此时你的“天地”不大于一张，你摸一张牌。你的回合外，任意非延时锦囊结算后进入弃牌堆后，你可以用一张相同颜色的“天地”替换之。
+*【传承】主将技，与你相同势力的其他角色摸牌阶段开始时，其可以交给你一张手牌，若此时你的手牌数不大于体力上限，其摸一张牌，否则你须将一张手牌交给该角色。
 *【梦行】副将技，锁定技，此武将牌上单独的阴阳鱼个数-1。副将技，结束阶段开始时，你可以将一张“天地”置入弃牌堆并指定一名已受伤并有手牌角色，然后选择一项：1.其回复1点体力然后弃置X张手牌；2.其摸X张牌然后失去1点体力（X为其已损失体力且至少为1）。
 ]]--
 Mtiandi = sgs.CreateTriggerSkill{
@@ -2393,6 +2391,10 @@ Mtiandi = sgs.CreateTriggerSkill{
 				log.arg = use.card:objectName()
 			room:sendLog(log)
 			room:notifySkillInvoked(dream, self:objectName())
+			local tiandipile = dream:getPile("tiandi")
+			if tiandipile:length() < 2 then
+				dream:drawCards(1)
+			end
 			return true
 		else
 			dream:obtainCard(use.card)
@@ -2437,6 +2439,8 @@ Mchuancheng = sgs.CreateTriggerSkill{
 			local return_card = room:askForExchange(dream, self:objectName(), 1, false)
 			room:broadcastSkillInvoke(self:objectName(), 2)
 			player:obtainCard(return_card, false)
+		else
+			player:drawCards(1)
 		end
 	end,
 }
@@ -2537,12 +2541,12 @@ sgs.LoadTranslationTable{
 	["@tiandi_club"] = "是否一张梅花非装备牌置于武将牌上使当前锦囊无效？",
 	["@tiandi_diamond"] = "是否一张方块非装备牌置于武将牌上使当前锦囊无效？",
 	["@tiandi_spade"] = "是否一张黑桃非装备牌置于武将牌上使当前锦囊无效？",
-	[":Mtiandi"] = "其他角色使用非延时锦囊（【无懈可击】除外）时，你可以将一张相同花色的非装备牌置于你的武将牌上称为“天地”，然后使之无效；你的回合外，任意非延时锦囊结算后进入弃牌堆后，你可以用一张相同颜色的“天地”替换之。",
+	[":Mtiandi"] = "其他角色使用非延时锦囊（【无懈可击】除外）时，你可以将一张相同花色的非装备牌置于你的武将牌上称为“天地”，然后使该锦囊无效；若此时你的“天地”不大于一张，你摸一张牌。你的回合外，任意非延时锦囊结算后进入弃牌堆后，你可以用一张相同颜色的“天地”替换之。",
 	["Mchuancheng"] = "传承",
 	["$Mchuancheng1"] = "力量增强了！",
 	["$Mchuancheng2"] = "正和我的心意。",
 	["chuancheng_give"] = "请交给对方一张手牌。",
-	[":Mchuancheng"] = "主将技，与你相同势力的其他角色摸牌阶段开始时，其可以交给你一张手牌，若此时你的手牌数大于体力上限，你须将一张手牌交给该角色。",
+	[":Mchuancheng"] = "主将技，与你相同势力的其他角色摸牌阶段开始时，其可以交给你一张手牌，若此时你的手牌数不大于体力上限，其摸一张牌，否则你须将一张手牌交给该角色。",
 	["Mmengxing"] = "梦行",
 	["$Mmengxing1"] = "让你自己暖和点~",
 	["$Mmengxing2"] = "诅咒你！",

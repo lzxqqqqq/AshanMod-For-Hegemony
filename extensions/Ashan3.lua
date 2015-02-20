@@ -1291,9 +1291,9 @@ sgs.LoadTranslationTable{
 ]]--
 Mwraith = sgs.General(Ashan3, "Mwraith", "an", 4)
 --[[
-【枯萎】锁定技，其他势力的角色死亡时，若其在你的攻击范围内且你已受伤，你回复1点体力，否则你与其余角色的距离-1。
+【枯萎】锁定技，其他势力的角色死亡时，若其与你的距离不大于1且你已受伤，你回复1点体力，否则你与其余角色的距离-1。
 【衰老】结束阶段开始时，你可以弃置一张基本牌令一名攻击范围内已受伤其他角色进行一次判定：若结果为红桃，其摸一张牌；否则你摸一张牌且直到你下回合开始时其手牌上限-X（X为其已损失体力值）。
-*【奴役】主将技，限定技，弃牌阶段开始时，你可以正面朝上交给一名其他角色三张不同类型的牌，将其视为“龙仆”。锁定技，当你受到一点伤害后，“龙仆”摸一张牌然后选择一项：1.交给你两张手牌；2.其失去1点体力使你回复1点体力。
+*【奴役】主将技，限定技，弃牌阶段开始时，若你已受伤，你可以正面朝上交给一名其他角色三张不同类型的牌，将其视为“龙仆”并回复1点体力。锁定技，当你受到一点伤害后，“龙仆”摸一张牌然后选择一项：1.交给你两张手牌；2.其失去1点体力使你回复1点体力。
 *【永暗】副将技，准备阶段开始时，若你区域内没有牌，你可以弃置场上装备区所有牌。
 ]]--			
 Mkuwei = sgs.CreateTriggerSkill{
@@ -1324,7 +1324,7 @@ Mkuwei = sgs.CreateTriggerSkill{
 			log.from = player
 		room:sendLog(log)
 		local death = data:toDeath()
-		if player:isWounded() and player:inMyAttackRange(death.who) then
+		if player:isWounded() and player:distanceTo(death.who) < 2 then
 			local Recover = sgs.RecoverStruct()
 			    Recover.recover = 1
 				Recover.who = player
@@ -1498,6 +1498,12 @@ MnuyiCard = sgs.CreateSkillCard{
 			log.from = target
 			log.to:append(player)
 		room:sendLog(log)
+		if player:isWounded() then
+			local Recover = sgs.RecoverStruct()
+			    Recover.recover = 1
+				Recover.who = player
+			room:recover(player, Recover)
+		end
 	end,
 }
 MnuyiVS = sgs.CreateViewAsSkill{
@@ -1542,7 +1548,7 @@ Mnuyi = sgs.CreateTriggerSkill{
 	can_trigger = function(self, event, room, player, data)
 		if player and player:isAlive() and player:hasSkill(self:objectName()) then		
 			if event == sgs.EventPhaseStart then
-				if player:getPhase() == sgs.Player_Discard and player:getMark("@nuyi_use") == 1 and not player:isKongcheng() then
+				if player:getPhase() == sgs.Player_Discard and player:getMark("@nuyi_use") == 1 and player:isWounded() and not player:isKongcheng() then
 					local has_basic = false
 					local has_equip = false
 					local has_trick = false
@@ -1645,7 +1651,7 @@ sgs.LoadTranslationTable{
 	["$Mkuwei"] = "捕捉你的灵魂！",
 	["#kuwei"] = "%from 吸收了死者的灵魂！",
 	["@kuwei"] = "枯萎",
-	[":Mkuwei"] = "锁定技，其他势力的角色死亡时，若其在你的攻击范围内且你已受伤，你回复1点体力，否则你与其余角色的距离-1。",
+	[":Mkuwei"] = "锁定技，其他势力的角色死亡时，若其与你的距离不大于1且你已受伤，你回复1点体力，否则你与其余角色的距离-1。",
 	["Mshuailao"] = "衰老",
 	["#Mshuailao_max"] = "衰老",
 	["$Mshuailao1"] = "你现在孤立无援！",
@@ -1669,7 +1675,7 @@ sgs.LoadTranslationTable{
 	["nuyi_give"] = "请交给目标两张手牌。",
 	["@nuyi_invoke"] = "是否交给一名其他角色三张不同类型的牌发动技能“奴役”？",
 	["~Mnuyi"] = "选择三张不同类型的牌-点击确定。",
-	[":Mnuyi"] = "主将技，限定技，弃牌阶段开始时，你可以正面朝上交给一名其他角色三张不同类型的牌，将其视为“龙仆”。锁定技，当你受到一点伤害后，“龙仆”摸一张牌然后选择一项：1.交给你两张手牌；2.其失去1点体力使你回复1点体力。",
+	[":Mnuyi"] = "主将技，限定技，弃牌阶段开始时，若你已受伤，你可以正面朝上交给一名其他角色三张不同类型的牌，将其视为“龙仆”并回复1点体力。锁定技，当你受到一点伤害后，“龙仆”摸一张牌然后选择一项：1.交给你两张手牌；2.其失去1点体力使你回复1点体力。",
 	["~Mwraith"] = "又一次，心痛欲裂……",
 	["cv:Mwraith"] = "暗影恶魔",
 	["illustrator:Mwraith"] = "英雄无敌6",
@@ -1759,7 +1765,7 @@ Mchuangzao = sgs.CreateTriggerSkill{
 	events = {sgs.PreCardUsed, sgs.EventPhaseEnd},
 	can_trigger = function(self, event, room, player, data)
 		local asha =  room:findPlayerBySkillName("Mxiangzheng")
-		if asha and asha:isAlive() and asha:hasShownOneGeneral() and asha:getMark("xiangzheng_balance") == 0 and asha:getMark("xiangzheng_death") == 0 and asha:getRole() ~= "careerist" then
+		if asha and asha:isAlive() and asha:hasShownSkill(Mxiangzheng) and asha:getMark("xiangzheng_balance") == 0 and asha:getMark("xiangzheng_death") == 0 and asha:getRole() ~= "careerist" then
 			if event == sgs.PreCardUsed then
 				if player:getPhase() == sgs.Player_Play and player:objectName() ~= asha:objectName() then
 					if player:hasShownOneGeneral() and player:getMark("create_use") < 2 then
@@ -1816,7 +1822,7 @@ Mpingheng = sgs.CreateTriggerSkill{
 	events = {sgs.EventPhaseStart},
 	can_trigger = function(self, event, room, player, data)
 		local asha =  room:findPlayerBySkillName("Mxiangzheng")
-		if asha and asha:isAlive() and asha:hasShownOneGeneral() and asha:getMark("xiangzheng_balance") == 1 and asha:getRole() ~= "careerist" then
+		if asha and asha:isAlive() and asha:hasShownSkill(Mxiangzheng) and asha:getMark("xiangzheng_balance") == 1 and asha:getRole() ~= "careerist" then
 			if player:getPhase() == sgs.Player_Play and player:objectName() ~= asha:objectName() and player:hasShownOneGeneral() then
 				if not asha:isKongcheng() then
 					if (player:getHandcardNum() > asha:getHandcardNum() and not player:isFriendWith(asha)) or (player:getHandcardNum() < asha:getHandcardNum() and player:isFriendWith(asha)) then
@@ -1858,7 +1864,7 @@ Mmiewang = sgs.CreateTriggerSkill{
 	events = {sgs.EventPhaseStart},
 	can_trigger = function(self, event, room, player, data)
 		local asha =  room:findPlayerBySkillName("Mxiangzheng")
-		if asha and asha:isAlive() and asha:hasShownOneGeneral() and asha:getMark("xiangzheng_death") == 1 and asha:getRole() ~= "careerist" then
+		if asha and asha:isAlive() and asha:hasShownSkill(Mxiangzheng) and asha:getMark("xiangzheng_death") == 1 and asha:getRole() ~= "careerist" then
 			if player:getPhase() == sgs.Player_Start and player:objectName() ~= asha:objectName() then
 				if player:hasShownOneGeneral() and not player:isFriendWith(asha) and player:getHp() > asha:getHp() then
 					return self:objectName(), asha
@@ -2517,7 +2523,7 @@ Myouhuo = sgs.CreateTriggerSkill{
 			room:showAllCards(target, player)
 			local m = 0
 			local empty = MemptyCard:clone()
-			if choice == "black" then
+			if choice == "youhuo_black" then
 				for _, cd in sgs.qlist(target:getHandcards()) do
 					if cd:isBlack() then
 						empty:addSubcard(cd)
@@ -2590,7 +2596,7 @@ Mbreeder:addCompanion("Mlacerator")
 --[[
 *【增殖】锁定技，当你的体力发生一次变化前，你摸一张牌。锁定技，你的回合外,若你已受伤，每当你的手牌数变化后，若你的手牌数不为X，你须将手牌补至或弃置至X张（X为你已损失体力）。
 *【回归】副将技，当一名与你相同势力的其他角色进入濒死时，若你已受伤其可以令你回复1点体力，否则其可以令你将手牌数补充至体力上限，若如此做，该角色死亡（视为天灾）。
-*【繁衍】主将技，当你攻击范围内与你相同势力的其他角色死亡时，若其不为魔婴且你有手牌，你可以弃置所有手牌令其在死亡后复活为“魔婴/士兵”，然后其摸两张牌。
+*【繁衍】主将技，当你攻击范围内与你相同势力的其他角色死亡时，若其不为魔婴且你有手牌，你可以弃置所有手牌令其在死亡（你无视特殊模式带来的死亡惩罚）后复活为“魔婴/士兵”，然后其摸两张牌。
 ]]--
 Mzengzhi = sgs.CreateTriggerSkill{
 	name = "Mzengzhi",
@@ -2677,13 +2683,13 @@ Mhuigui = sgs.CreateTriggerSkill{
 			local recover = sgs.RecoverStruct()
 				recover.recover = 1
 				recover.who = player
-			room:recover(player, recover)
-			room:notifySkillInvoked(player, self:objectName())
+			room:recover(breeder, recover)
+			room:notifySkillInvoked(breeder, self:objectName())
 		else
-			local x = player:getMaxHp() - player:getHandcardNum()
+			local x = breeder:getMaxHp() - breeder:getHandcardNum()
 			if x > 0 then
-				player:drawCards(x)
-				room:notifySkillInvoked(player, self:objectName())
+				breeder:drawCards(x)
+				room:notifySkillInvoked(breeder, self:objectName())
 			end
 		end
 		room:killPlayer(dying.who)
@@ -2696,9 +2702,9 @@ Mfanyan = sgs.CreateTriggerSkill{
 	relate_to_place = "head",
 	can_preshow = true,
 	can_trigger = function(self, event, room, player, data)
-		if player and player:isAlive() and player:hasSkill(self:objectName()) then
+		if player and player:isAlive() and player:hasSkill(self:objectName()) and not player:isKongcheng() then
 			local death = data:toDeath()
-			if death.who:objectName() ~= player:objectName() and death.who:hasShownOneGeneral() and (player:isFriendWith(death.who) or player:willBeFriendWith(death.who)) and not player:isKongcheng() then
+			if death.who:objectName() ~= player:objectName() and death.who:hasShownOneGeneral() and (player:isFriendWith(death.who) or player:willBeFriendWith(death.who)) then
 				if death.who:getGeneralName() ~= "Mbug" and player:inMyAttackRange(death.who) then
 					return self:objectName()
 				end
@@ -2715,20 +2721,20 @@ Mfanyan = sgs.CreateTriggerSkill{
 		return false
 	end,
 	on_effect = function(self, event, room, player, data)
-		room:setPlayerMark(player, "Fanyan_ing", 1)
 		room:setPlayerMark(player, "chaomu", 1)
+		room:setPlayerMark(player, "fanyan_ing", 1)
 	end,
 }
 Mfanyan_effect = sgs.CreateTriggerSkill{
 	name = "#Mfanyan_effect",  
 	frequency = sgs.Skill_Compulsory,
-	priority = -4,
+	priority = -1,
 	events = {sgs.BuryVictim},
 	can_trigger = function(self, event, room, player, data)
 		local breeder =  room:findPlayerBySkillName("Mfanyan")
-		if breeder and breeder:isAlive() and breeder:getMark("Fanyan_ing") == 1 then
-			room:setPlayerMark(breeder, "Fanyan_ing", 0)
+		if breeder and breeder:isAlive() and breeder:getMark("fanyan_ing") == 1 then
 			if player:objectName() ~= breeder:objectName() and player:isFriendWith(breeder) then
+				room:setPlayerMark(breeder, "fanyan_ing", 0)
 				room:notifySkillInvoked(player, self:objectName())
 				player:removeGeneral(true)
 				player:removeGeneral(false)
@@ -2764,7 +2770,7 @@ sgs.LoadTranslationTable{
 	[":Mzengzhi"] = "锁定技，当你的体力发生一次变化前，你摸一张牌。锁定技，你的回合外,若你已受伤，每当你的手牌数变化后，若你的手牌数不为X，你须将手牌补至或弃置至X张（X为你已损失体力）。",
 	["Mfanyan"] = "繁衍",
 	["$Mfanyan"] = "更多的嘴巴等着吃饭呢！",
-	[":Mfanyan"] = "主将技，当你攻击范围内与你相同势力的其他角色死亡时，若其不为魔婴且你有手牌，你可以弃置所有手牌令其在死亡后复活为“魔婴/士兵”，然后其摸两张牌。",
+	[":Mfanyan"] = "主将技，当你攻击范围内与你相同势力的其他角色死亡时，若其不为魔婴且你有手牌，你可以弃置所有手牌令其在死亡（你无视特殊模式带来的死亡惩罚）后复活为“魔婴/士兵”，然后其摸两张牌。",
 	["Mhuigui"] = "回归",
 	["$Mhuigui"] = "到妈妈这儿来！",
 	[":Mhuigui"] = "副将技，当一名与你相同势力的其他角色进入濒死时，若你已受伤其可以令你回复1点体力，否则其可以令你将手牌数补充至体力上限，若如此做，该角色死亡（视为天灾）。",
@@ -3159,7 +3165,8 @@ Mbaoxing = sgs.CreateTriggerSkill{
 		elseif event == sgs.SlashMissed then
 			if player and player:isAlive() and player:hasSkill(self:objectName()) and player:hasShownSkill(self) and player:getLostHp() > 1 then
 				local effect = data:toSlashEffect()
-				if effect.to and effect.to:isAlive() then
+				if effect.to and effect.to:isAlive() and effect.to:hasFlag("baoxing_target") then
+					room:setPlayerFlag(effect.to, "-baoxing_target")
 					room:notifySkillInvoked(player, self:objectName())
 					effect.to:drawCards(1)
 					if not player:isKongcheng() then
@@ -3172,7 +3179,8 @@ Mbaoxing = sgs.CreateTriggerSkill{
 			end
 		else
 			local damage = data:toDamage()
-			if damage.to and damage.to:isAlive() and damage.card and damage.card:isKindOf("Slash") and damage.card:getSkillName(false) == "baoxing_slash" and damage.to:getMark("baoxing") == 0 then
+			if damage.to and damage.to:isAlive() and damage.to:hasFlag("baoxing_target") and damage.card and damage.card:isKindOf("Slash") and damage.card:getSkillName(false) == "baoxing_slash" and damage.to:getMark("baoxing") == 0 then
+				room:setPlayerFlag(damage.to, "-baoxing_target")
 				local ravager =  room:findPlayerBySkillName(self:objectName())
 				if ravager and ravager:isAlive() and ravager:hasShownSkill(self) and ravager:getLostHp() > 2 then
 					room:getThread():delay(1000)
@@ -3217,6 +3225,7 @@ Mbaoxing = sgs.CreateTriggerSkill{
 			slash:setSkillName("baoxing_slash")
 			if player:canSlash(damage.from,slash,false) then
 				room:broadcastSkillInvoke(self:objectName(), 4)
+				room:setPlayerFlag(damage.from, "baoxing_target")
 				local use = sgs.CardUseStruct()
 					use.from = player
 					use.to:append(damage.from)
@@ -3921,8 +3930,8 @@ lord_Murcash = sgs.General(Ashan3, "lord_Murcash$", "an", 4, true, true)
 Murcash:addCompanion("Mazkaal")
 --[[
 *【混沌】君主技，锁定技，你拥有“混沌之鳞”。
-“混沌之鳞”锁定技，当与你势力相同的一名角色被其他势力的角色指定为基本牌或锦囊牌唯一的目标时，若其没有“混沌”，其亮出牌堆顶的一张牌：若两牌的类型相同，则取消之并置于弃牌堆；否则将此牌置于其武将牌上称为“混沌”。锁定技，有“混沌”的角色准备阶段结束时，若其已受伤，其获得该“混沌”并摸X张牌（X为其已损失体力且最大为2），否则其将“混沌”置于弃牌堆。
-*【循环】当你杀死一名角色后，你可以弃置一张基本牌获得其一个非锁定技能（君主技除外）。其他角色准备阶段结束时，若其有未展示的武将，你可以弃置一张锦囊牌令其展示一名武将：若其与你势力相同，你摸两张牌；否则其弃置两张手牌。
+“混沌之鳞”锁定技，当与你势力相同的一名角色被其他势力的角色指定为基本牌或非延时锦囊的唯一的目标时，若其没有“混沌”，其亮出牌堆顶的一张牌：若两牌的类型相同，则取消之并置于弃牌堆；否则将此牌置于其武将牌上称为“混沌”。锁定技，有“混沌”的角色准备阶段结束时，若其已受伤，其获得该“混沌”并摸X张牌（X为其已损失体力且最大为2），否则其将“混沌”置于弃牌堆。
+*【循环】当你杀死一名角色后，你可以获得其一个非锁定技能（君主技除外）。其他角色准备阶段结束时，若其有未展示的武将，你可以弃置一张锦囊牌令其展示一名武将：若其与你势力相同，你摸两张牌然后其摸一张牌；否则其弃置两张手牌然后你摸一张牌。
 ]]--
 Mhundun = sgs.CreateTriggerSkill{
 	name = "Mhundun$",
@@ -3933,7 +3942,7 @@ Mhundun = sgs.CreateTriggerSkill{
 		if event == sgs.TargetConfirming then
 			if not player:hasShownOneGeneral() then return "" end
 			local use = data:toCardUse()
-			if use.from and use.card and (use.card:isKindOf("BasicCard") or use.card:isKindOf("TrickCard")) and not use.from:isFriendWith(player) and use.to:length() == 1 and use.to:contains(player) then
+			if use.from and use.card and (use.card:isKindOf("BasicCard") or use.card:isNDTrick()) and not use.from:isFriendWith(player) and use.to:length() == 1 and use.to:contains(player) then
 				local hundunpile = player:getPile("hundun")
 				if hundunpile:length() == 0 then
 					local urcash
@@ -4019,14 +4028,6 @@ Mxunhuan = sgs.CreateTriggerSkill{
 			local damage = death.damage
 			if player:objectName() == death.who:objectName() and damage then
 				if damage.from and not damage.from:isKongcheng() and damage.from:hasSkill(self:objectName()) then
-					local basic
-					for _, card in sgs.qlist(damage.from:getHandcards()) do
-						if card:isKindOf("BasicCard") then
-							basic = true
-							break
-						end
-					end
-					if not basic then return "" end
 					local skill_list = {}
 					for _,skill in sgs.qlist(player:getVisibleSkillList()) do
 						if not (table.contains(skill_list, skill:objectName()) or skill:isLordSkill() or skill:isAttachedLordSkill()) then
@@ -4063,7 +4064,7 @@ Mxunhuan = sgs.CreateTriggerSkill{
 	on_cost = function(self,event,room,player,data)
 		if event == sgs.BuryVictim then
 			local damage = data:toDeath().damage
-			if room:askForCard(damage.from, "BasicCard|.|.|hand", "@xunhuan_invoke1", data, sgs.Card_MethodDiscard) then
+			if damage.from:askForSkillInvoke(self:objectName(), data) then
 				room:broadcastSkillInvoke(self:objectName(), 1)
 				room:doSuperLightbox("Murcash", self:objectName())
 				return true
@@ -4073,7 +4074,7 @@ Mxunhuan = sgs.CreateTriggerSkill{
 				local ai_data = sgs.QVariant()
 				ai_data:setValue(player)
 				local urcash = room:findPlayerBySkillName(self:objectName())
-				if room:askForCard(urcash, "TrickCard|.|.|hand", "@xunhuan_invoke2", ai_data, sgs.Card_MethodDiscard) then
+				if room:askForCard(urcash, "TrickCard|.|.|hand", "@xunhuan_invoke", ai_data, sgs.Card_MethodDiscard) then
 					room:broadcastSkillInvoke(self:objectName(), 2)
 					return true
 				end
@@ -4124,6 +4125,7 @@ Mxunhuan = sgs.CreateTriggerSkill{
 			if player:isFriendWith(urcash) then
 				room:broadcastSkillInvoke(self:objectName(), 3)
 				urcash:drawCards(2)
+				player:drawCards(1)
 			else
 				if not player:isKongcheng() then
 					room:broadcastSkillInvoke(self:objectName(), 4)
@@ -4133,6 +4135,7 @@ Mxunhuan = sgs.CreateTriggerSkill{
 						room:askForDiscard(player, self:objectName(), 2, 2, false, false)
 					end
 				end
+				urcash:drawCards(1)
 			end
 		end
 	end,
@@ -4157,7 +4160,7 @@ sgs.LoadTranslationTable{
 	["$Mhundun3"] = "有本事就逃。",
 	["$Mhundun4"] = "琐碎的供奉。",
 	["$Mhundun5"] = "快点上供！",
-	[":Mhundun"] = "君主技，锁定技，你拥有“混沌之鳞”。\n\n“混沌之鳞”\n锁定技，当与你势力相同的一名角色被其他势力的角色指定为基本牌或锦囊牌唯一的目标时，若其没有“混沌”，其亮出牌堆顶的一张牌：若两牌的类型相同，则取消之并置于弃牌堆；否则将此牌置于其武将牌上称为“混沌”。锁定技，与你势力相同的角色准备阶段结束时，若其已受伤并有“混沌”，其获得该“混沌”并摸X张牌（X为其已损失体力且最大为2），否则其将“混沌”置于弃牌堆。",
+	[":Mhundun"] = "君主技，锁定技，你拥有“混沌之鳞”。\n\n“混沌之鳞”\n锁定技，当与你势力相同的一名角色被其他势力的角色指定为基本牌或非延时锦囊的唯一的目标时，若其没有“混沌”，其亮出牌堆顶的一张牌：若两牌的类型相同，则取消之并置于弃牌堆；否则将此牌置于其武将牌上称为“混沌”。锁定技，与你势力相同的角色准备阶段结束时，若其已受伤并有“混沌”，其获得该“混沌”并摸X张牌（X为其已损失体力且最大为2），否则其将“混沌”置于弃牌堆。",
 	["Mxunhuan"] = "循环",
 	["xunhuan_1"] = "展示主将",
 	["xunhuan_2"] = "展示副将",
@@ -4165,9 +4168,8 @@ sgs.LoadTranslationTable{
 	["$Mxunhuan2"] = "给我跪下，平民！",
 	["$Mxunhuan3"] = "你是我的臣民！",
 	["$Mxunhuan4"] = "叛乱已镇压！",
-	["@xunhuan_invoke1"] = "是否弃置一张基本牌发动技能“循环”？",
-	["@xunhuan_invoke2"] = "是否弃置一张锦囊牌发动技能“循环”？",
-	[":Mxunhuan"] = "当你杀死一名角色后，你可以弃置一张基本牌获得其一个非锁定技能（君主技除外）。其他角色准备阶段结束时，若其有未展示的武将，你可以弃置一张锦囊牌令其展示一名武将：若其与你势力相同，你摸两张牌；否则其弃置两张手牌。",
+	["@xunhuan_invoke"] = "是否弃置一张锦囊牌发动技能“循环”？",
+	[":Mxunhuan"] = "当你杀死一名角色后，你可以获得其一个非锁定技能（君主技除外）。其他角色准备阶段结束时，若其有未展示的武将，你可以弃置一张锦囊牌令其展示一名武将：若其与你势力相同，你摸两张牌然后其摸一张牌；否则其弃置两张手牌然后你摸一张牌。",
 	["~Murcash"] = "所以这就是结局？",
 	["cv:Murcash"] = "骷髅王",
 	["illustrator:Murcash"] = "英雄无敌6",

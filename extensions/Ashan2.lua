@@ -230,7 +230,7 @@ Mpearl = sgs.General(Ashan2, "Mpearl", "mi", 3, false)
 --珠联璧合：剑圣
 Mpearl:addCompanion("Mkensei")
 --[[
-【烟波】结束阶段开始时，你可以展示牌堆顶X+1张牌（X为你已损失体力），然后获得其中的红色牌并弃置其余的牌。
+【烟波】结束阶段开始时，你可以展示牌堆顶X+1张牌（X为你已损失体力且最大为2），然后获得其中的红色牌并弃置其余的牌。
 *【蛇舞】摸牌阶段开始时，若你有手牌，你可以指定一名有手牌且已受伤的其他角色观看你的手牌,然后你选择一项：1.其获得其中的红色牌，然后其回复1点体力并弃置所有黑色手牌；2.其获得其中的黑色牌，然后其无法使用和打出红色手牌直到本回合结束。
 ]]--
 Myanbo = sgs.CreateTriggerSkill{
@@ -255,6 +255,7 @@ Myanbo = sgs.CreateTriggerSkill{
 	end,
 	on_effect = function(self, event, room, player, data)
 		local x = player:getLostHp()+1
+		x = math.min(2, x)
 		local idlist = room:getNCards(x)
 		for _,ids in sgs.qlist(idlist) do
 			local reason = sgs.CardMoveReason(sgs.CardMoveReason_S_REASON_SHOW, player:objectName(),"", self:objectName(), "")
@@ -419,7 +420,7 @@ sgs.LoadTranslationTable{
 	["$Myanbo1"] = "开始涨潮了。",
 	["$Myanbo2"] = "（笑声）",
 	["$Myanbo3"] = "还有下一次！",
-	[":Myanbo"] = "结束阶段开始时，你可以展示牌堆顶X+1张牌（X为你已损失体力），然后获得其中的红色牌并弃置其余的牌。",
+	[":Myanbo"] = "结束阶段开始时，你可以展示牌堆顶X+1张牌（X为你已损失体力且最大为2），然后获得其中的红色牌并弃置其余的牌。",
 	["Mshewu"] = "蛇舞",
 	["#Mshewu_recover"] = "蛇舞",
 	["$Mshewu1"] = "让我们弄出点声响~",
@@ -714,7 +715,7 @@ Myukionna = sgs.General(Ashan2, "Myukionna", "mi", 3, false)
 --[[
 【霜形】你的回合外，当你成为黑桃基本牌或黑桃锦囊的目标后，在其结算后，你可以弃置一张手牌获得之，若你弃置的手牌为黑桃花色，你摸一张牌。
 *【魔性】锁定技，你的红桃手牌视为黑桃牌。锁定技，当你成为男性角色使用的红色锦囊的目标时，你取消之。
-【冻结】主将技，限定技，弃牌阶段开始时，你可以弃置三张不同类型的黑桃牌，然后指定一名已受伤的装备区不为空的其他势力的角色，其弃置装备区所有牌并无法使用装备牌。
+【冻结】主将技，限定技，弃牌阶段开始时，你可以弃置三张不同类型的黑桃牌，然后指定一名装备区不为空的其他势力的角色，其弃置装备区所有牌并无法使用装备牌。
 ]]--
 Mbingjing = sgs.CreateTriggerSkill{
 	name = "Mbingjing",
@@ -836,7 +837,7 @@ MdongjieCard = sgs.CreateSkillCard{
 	will_throw = false, 
 	filter = function(self, targets, to_select, Self)
 		if #targets == 0 then
-		    return to_select:hasShownOneGeneral() and to_select:objectName() ~= sgs.Self:objectName() and to_select:isWounded() and not (sgs.Self:isFriendWith(to_select) or sgs.Self:willBeFriendWith(to_select)) and to_select:hasEquip()
+		    return to_select:hasShownOneGeneral() and to_select:objectName() ~= sgs.Self:objectName() and not (sgs.Self:isFriendWith(to_select) or sgs.Self:willBeFriendWith(to_select)) and to_select:hasEquip()
 		end
 		return false
 	end,
@@ -916,7 +917,7 @@ Mdongjie = sgs.CreateTriggerSkill{
 				if spade_basic and spade_equip and spade_trick then
 					local targets = sgs.SPlayerList()
 					for _,p in sgs.qlist(room:getOtherPlayers(player)) do
-						if p:hasShownOneGeneral() and p:isWounded() and not (player:isFriendWith(p) or player:willBeFriendWith(p)) and p:hasEquip() then
+						if p:hasShownOneGeneral() and not (player:isFriendWith(p) or player:willBeFriendWith(p)) and p:hasEquip() then
 							targets:append(p)
 						end
 					end
@@ -963,7 +964,7 @@ sgs.LoadTranslationTable{
 	[":Mmoxing"] = "锁定技，你的红桃手牌视为黑桃牌。锁定技，当你成为男性角色使用的红色锦囊的目标时，你取消之。",
 	["Mdongjie"] = "冻结",
 	["$Mdongjie"] = "你命中注定要变得晶莹剔透。",
-	[":Mdongjie"] = "主将技，限定技，弃牌阶段开始时，你可以弃置三张不同类型的黑桃牌，然后指定一名已受伤的装备区不为空的其他势力的角色，其弃置装备区所有牌并无法使用装备牌。",
+	[":Mdongjie"] = "主将技，限定技，弃牌阶段开始时，你可以弃置三张不同类型的黑桃牌，然后指定一名装备区不为空的其他势力的角色，其弃置装备区所有牌并无法使用装备牌。",
 	["MdongjieCard"] = "冻结",
 	["MdongjieVS"] = "冻结",
 	["mdongjie"] = "冻结",
@@ -1796,7 +1797,7 @@ sgs.LoadTranslationTable{
 	[":Myunji"] = "副将技，与你势力相同的角色摸牌阶段开始时，若其为被围攻角色，你可以令其将手牌数补充至围攻角色中的手牌数较大值。",
 	["Mbaoxue"] = "暴雪",
 	["#Mbaoxue_effect"] = "暴雪",
-	["@baoxue_invoke"] = "是否弃置一张非基本牌发动技能“暴雪”？",
+	["@baoxue_invoke"] = "是否弃置一张锦囊牌发动技能“暴雪”？",
 	["@baoxuedraw"] = "跳过摸牌",
 	["@baoxueplay"] = "跳过出牌",
 	["@baoxuedis"] = "跳过弃牌",
@@ -1828,7 +1829,7 @@ lord_Mshalassa = sgs.General(Ashan2, "lord_Mshalassa$", "mi", 4, false, true)
 Mshalassa:addCompanion("Mhairyou")
 --[[
 *【波澜】君主技，锁定技，你拥有“宁静之心”。
-“宁静之心”与你势力相同的角色使用一张非延时锦囊指定目标后时，若其指定了大于一名目标，你可以选择一项：1.该锦囊对与你相同势力的角色无效；2.该锦囊对与你不同势力的角色无效。
+“宁静之心”与你势力相同的角色使用一张非延时锦囊指定目标后时，若其指定了大于一名目标，你可以摸一张牌并选择一项：1.该锦囊对与你相同势力的角色无效；2.该锦囊对与你不同势力的角色无效。
 【怒涛】你使用的非延时锦囊（【无懈可击】和【借刀杀人】除外）结算完毕后，你可以弃置一张相同颜色的锦囊牌，视为你对同一目标再次使用了此非延时锦囊。
 ]]--
 Mbolan = sgs.CreateTriggerSkill{ 
@@ -1855,6 +1856,7 @@ Mbolan = sgs.CreateTriggerSkill{
 		local use = data:toCardUse()
 		local has_friend
 		local has_enemy
+		player:drawCards(1)
 		for _,p in sgs.qlist(use.to) do
 			if p:hasShownOneGeneral() then
 				if p:isFriendWith(player) then
@@ -2034,7 +2036,7 @@ sgs.LoadTranslationTable{
 	["bolan_enemy"] = "惩戒敌人",
 	["$Mbolan1"] = "密不透风！",
 	["$Mbolan2"] = "送你个吻，晚安。",
-	[":Mbolan"] = "君主技，锁定技，你拥有“宁静之心”。\n\n“宁静之心”\n与你势力相同的角色使用一张非延时锦囊指定目标后时，若其指定了大于一名目标，你可以选择一项：1.该锦囊对与你相同势力的角色无效；2.该锦囊对与你不同势力的角色无效。",
+	[":Mbolan"] = "君主技，锁定技，你拥有“宁静之心”。\n\n“宁静之心”\n与你势力相同的角色使用一张非延时锦囊指定目标后时，若其指定了大于一名目标，你可以摸一张牌并选择一项：1.该锦囊对与你相同势力的角色无效；2.该锦囊对与你不同势力的角色无效。",
 	["Mnutao"] = "怒涛",
 	["$Mnutao"] = "死掉吧，就像爱一样，全都死掉吧！",
 	["@nutao_red"] = "是否弃置一张红色锦囊发动技能“怒涛”？",
@@ -2061,7 +2063,7 @@ Mshade = sgs.General(Ashan2, "Mshade", "mi", 3)
 --珠联璧合：黑龙
 Mshade:addCompanion("Mblackdragon")
 --[[
-【背刺】结束阶段结束时，你可以弃置一张装备牌进入“隐匿”状态直到你使用的【杀】或【决斗】结算完毕（最多维持3轮）。锁定技，“隐匿”状态下当你被其他角色指定为【杀】或非延时锦囊的唯一目标时，你取消之。锁定技，“隐匿”状态下你摸牌阶段少摸一张牌。锁定技，“隐匿”状态下你使用【杀】或【决斗】指定目标后，你弃置其一张牌。
+【背刺】结束阶段结束时，你可以弃置一张装备牌进入“隐匿”状态直到你使用的【杀】或【决斗】结算完毕或受到一次伤害（最多维持3轮）。锁定技，“隐匿”状态下当你被其他角色指定为【杀】或非延时锦囊的唯一目标时，你取消之。锁定技，“隐匿”状态下你摸牌阶段少摸一张牌。锁定技，“隐匿”状态下你使用【杀】或【决斗】指定目标后，你弃置其一张牌。
 【毒刃】锁定技，你的杀附带“毒”属性。
 *“毒”锁定技，当目标角色被“毒”属性的【杀】造成伤害时，其进入“中毒”状态（“毒”属性的不改变【杀】的原有属性）。
 *“中毒”锁定技，“中毒”的角色在其摸牌阶段开始时，若其已受伤其进行一次判定：若结果为黑桃，其弃置等同于已损失体力数的手牌否则失去1点体力；若结果为梅花或方块，其少摸一张牌；若结果为红桃，其解除“中毒”状态。
@@ -2069,7 +2071,7 @@ Mshade:addCompanion("Mblackdragon")
 Mbeici = sgs.CreateTriggerSkill{
 	name = "Mbeici", 
 	frequency = sgs.Skill_NotFrequent,
-	events = {sgs.EventPhaseEnd, sgs.TargetConfirming, sgs.TargetChosen, sgs.CardUsed, sgs.CardFinished},
+	events = {sgs.EventPhaseEnd, sgs.Damaged, sgs.TargetConfirming, sgs.TargetChosen, sgs.CardUsed, sgs.CardFinished},
 	can_preshow = true,
 	can_trigger = function(self, event, room, player, data)
 		if event == sgs.EventPhaseEnd then
@@ -2113,6 +2115,15 @@ Mbeici = sgs.CreateTriggerSkill{
 						end
 					end
 				end
+			end
+		elseif event == sgs.Damaged then
+			if player and player:isAlive() and player:getMark("@yinni") > 0 then
+				room:setPlayerMark(player, "@yinni", 0)
+				room:broadcastSkillInvoke(self:objectName(), 2)
+				local log = sgs.LogMessage()
+					log.type = "#beici2"
+					log.from = player
+				room:sendLog(log)
 			end
 		elseif event == sgs.TargetConfirming then
 			local use = data:toCardUse()
@@ -2338,7 +2349,7 @@ sgs.LoadTranslationTable{
 	["#beici1"] = "%from 进入隐匿状态!",
 	["#beici2"] = "%from 退出隐匿状态!",
 	["@beici_invoke"] = "是否弃置一张装备牌发动技能“背刺”？",
-	[":Mbeici"] = "结束阶段结束时，你可以弃置一张装备牌进入“隐匿”状态直到你使用的【杀】或【决斗】结算完毕（最多维持3轮）。锁定技，“隐匿”状态下当你被其他角色指定为【杀】或非延时锦囊的唯一目标时，你取消之。锁定技，“隐匿”状态下你摸牌阶段少摸一张牌。锁定技，“隐匿”状态下你使用【杀】或【决斗】指定目标后，你弃置其一张牌。",
+	[":Mbeici"] = "结束阶段结束时，你可以弃置一张装备牌进入“隐匿”状态直到你使用的【杀】或【决斗】结算完毕或受到一次伤害（最多维持3轮）。锁定技，“隐匿”状态下当你被其他角色指定为【杀】或非延时锦囊的唯一目标时，你取消之。锁定技，“隐匿”状态下你摸牌阶段少摸一张牌。锁定技，“隐匿”状态下你使用【杀】或【决斗】指定目标后，你弃置其一张牌。",
 	["Mduren"] = "毒刃",
 	["#Mduren_effect"] = "中毒",
 	["#Mduren_draw"] = "中毒",
@@ -2902,7 +2913,7 @@ Mfaceless:addCompanion("Mwatcher")
 Mfaceless:addCompanion("Mscorpicore")
 --[[
 *【影击】当你使用【杀】对目标角色造成一次伤害时，你可以防止该伤害并选择一项：1.令其体力上限-1，直到其造成一次伤害；2.令其选择弃置其一个区域内所有牌。
-*【操纵】主将技，锁定技，此武将牌上单独的阴阳鱼个数-1。主将技，弃牌阶段开始时，若你手牌数小于体力，你可以暗中指定一名攻击范围内的其他势力角色：该角色下一个出牌阶段结束时，你获得其在该阶段使用的所有牌。
+*【操纵】主将技，锁定技，此武将牌上单独的阴阳鱼个数-1。主将技，弃牌阶段开始时，若你手牌数不大于体力上限，你可以暗中指定一名攻击范围内的其他势力角色：该角色下一个出牌阶段结束时，你获得其在该阶段使用的所有牌。
 *【侵袭】副将技，与你势力相同的角色出牌阶段开始时，若其下家手牌数大于你，其可以将一张手牌暗置于牌堆顶令你获得其下家一张手牌。
 ]]--
 Myingji = sgs.CreateTriggerSkill{
@@ -3015,7 +3026,7 @@ Mcaozong = sgs.CreateTriggerSkill{
 		if event == sgs.EventPhaseStart then
 			if player and player:isAlive() and player:hasSkill(self:objectName()) then
 				if player:getPhase() == sgs.Player_Discard then
-					if player:getHandcardNum() < player:getHp() then
+					if player:getHandcardNum() <= player:getMaxHp() then
 						local targets = sgs.SPlayerList()
 						for _, p in sgs.qlist(room:getOtherPlayers(player)) do
 							if p:hasShownOneGeneral() and not (player:isFriendWith(p) or player:willBeFriendWith(p)) and player:inMyAttackRange(p) and p:getMark("caozong") == 0 then
@@ -3174,7 +3185,7 @@ sgs.LoadTranslationTable{
 	["$Mcaozong2"] = "我的魔典里又多了一个名字。",
 	["$Mcaozong3"] = "小角色！",
 --	["@caozong"] = "操纵",
-	[":Mcaozong"] = "主将技，锁定技，此武将牌上单独的阴阳鱼个数-1。主将技，弃牌阶段开始时，若你手牌数小于体力，你可以暗中指定一名攻击范围内的其他势力角色：该角色下一个出牌阶段结束时，你获得其在该阶段使用的所有牌。",
+	[":Mcaozong"] = "主将技，锁定技，此武将牌上单独的阴阳鱼个数-1。主将技，弃牌阶段开始时，若你手牌数不大于体力上限，你可以暗中指定一名攻击范围内的其他势力角色：该角色下一个出牌阶段结束时，你获得其在该阶段使用的所有牌。",
 	["~Mfaceless"] = "暗影包围了你！",
 	["cv:Mfaceless"] = "术士",
 	["illustrator:Mfaceless"] = "英雄无敌6",

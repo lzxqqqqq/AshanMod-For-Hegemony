@@ -607,9 +607,9 @@ end
     【鸢妖】
 ]]--
 --往返
-sgs.ai_skill_invoke["Mwangfan"] = function(self, data)
+sgs.ai_skill_playerchosen["Mwangfan"] = function(self, data)
     local target
-	local slash = sgs.cloneCard("slash")
+	local slash = sgs.Sanguosha:cloneCard("slash")
 	local targets = sgs.QList2Table(self.room:getOtherPlayers(self.player))
 	self:sort(targets, "handcard")
 	for _,p in ipairs(targets) do
@@ -631,21 +631,9 @@ sgs.ai_skill_invoke["Mwangfan"] = function(self, data)
 		end
 	end
 	if target then
-		self.room:setPlayerFlag(target, "wangfan_target")
-		return true
+		return target
 	end
-	return false
-end
-sgs.ai_skill_playerchosen["Mwangfan"] = function(self, targets)
-    local target
-	for _, p in sgs.qlist(self.room:getOtherPlayers(self.player)) do
-		if p:hasFlag("wangfan_target") then
-		    target = p
-			self.room:setPlayerFlag(target, "-wangfan_target")
-			break
-		end
-	end
-	return target
+	return nil
 end
 sgs.ai_playerchosen_intention["Mwangfan"] = 40
 --灵禽

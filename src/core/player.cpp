@@ -889,6 +889,18 @@ QString Player::getPileName(int card_id) const {
     return QString();
 }
 
+QList<int> Player::getHandPile() const{
+    QList<int> result;
+    foreach (const QString &pile,getPileNames()){
+        if (pile.startsWith("&") || pile == "wooden_ox"){
+            foreach(int id,getPile(pile)){
+                result.append(id);
+            }
+        }
+    }
+    return result;
+}
+
 bool Player::pileOpen(const QString &pile_name, const QString &player) const {
     return pile_open[pile_name].contains(player);
 }
@@ -1467,7 +1479,7 @@ bool Player::willBeFriendWith(const Player *player) const
 				break;
 			}
 		}
-		//	
+		//
         int i = 1;
         bool has_lord = isAlive() && isLord();
 

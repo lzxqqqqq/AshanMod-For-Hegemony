@@ -324,6 +324,8 @@ bool GameRule::effect(TriggerEvent triggerEvent, Room *room, ServerPlayer *playe
 								room->setPlayerProperty(p, "maxhp", p->getMaxHp() + 1);
 								room->setPlayerProperty(p, "hp", p->getMaxHp());
 								p->drawCards(1);
+							} else {
+								room->setPlayerMark(p, "zhengfeng_careerist", 1);
 							}
 						}
 					}
@@ -853,8 +855,11 @@ bool GameRule::effect(TriggerEvent triggerEvent, Room *room, ServerPlayer *playe
 
 				room->setPlayerMark(player, "@zhengfeng_lord", 0);
 				foreach (ServerPlayer *p, room->getOtherPlayers(player, false)){
-					if (p->isFriendWith(player) && p->hasShownOneGeneral() && (p->getMark("@liming") < 1))
-						room->killPlayer(p);
+					if (p->isFriendWith(player) && p->hasShownOneGeneral()){
+						if (p->getMark("fanyan_ing") < 1 && p->getMark("@liming") < 7){
+							room->killPlayer(p);
+						}
+					}
 				}
 				if (killer && killer->hasShownOneGeneral()){
 					foreach (ServerPlayer *p, room->getAlivePlayers()){
@@ -916,8 +921,11 @@ bool GameRule::effect(TriggerEvent triggerEvent, Room *room, ServerPlayer *playe
 						room->doLightbox("$xuexi_an", 2000);
 
 					foreach (ServerPlayer *p, room->getOtherPlayers(player, false)){
-						if (p->isFriendWith(player) && p->hasShownOneGeneral() && (p->getMark("@liming") < 1))
-							room->killPlayer(p);
+						if (p->isFriendWith(player) && p->hasShownOneGeneral()){
+							if (p->getMark("fanyan_ing") < 1 && p->getMark("@liming") < 7){
+								room->killPlayer(p);
+							}
+						}
 					}
 					if (killer->getRole() != "careerist"){
 						foreach (ServerPlayer *p, room->getAlivePlayers()){

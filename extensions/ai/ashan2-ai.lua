@@ -173,7 +173,7 @@ sgs.ai_skill_use["@@Mdongjie"] = function(self, prompt)
 	local targets = sgs.QList2Table(self.room:getOtherPlayers(self.player))
     self:sort(targets, "hp", true)
 	for _, p in ipairs(targets) do
-	    if p:hasShownOneGeneral() and self:isEnemy(p) and p:isWounded() and p:hasEquip() then
+	    if p:hasShownOneGeneral() and self:isEnemy(p) and p:hasEquip() then
 		    target = p
 			break
 		end
