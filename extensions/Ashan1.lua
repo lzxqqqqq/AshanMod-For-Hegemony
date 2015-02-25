@@ -350,7 +350,7 @@ Mvestal = sgs.General(Ashan1, "Mvestal", "ying", 3, false)
 --[[
 *【治愈】摸牌阶段，你可以放弃摸牌，改为令一名已受伤的其他角色回复1点体力，然后你摸X张牌（X为其已损失体力且最多为2）。
 *【信仰】主将技，当你受到一次伤害后，你可以展示一张手牌进行一次判定：若结果与你展示的手牌颜色相同，你弃置该手牌并回复一点体力；否则你获得该判定牌。
-*【平和】副将技，锁定技，当你使用【杀】对目标角色造成一次伤害后，若其与你势力不同，你弃置其一张手牌。
+*【平和】副将技，锁定技，当你使用【杀】对目标角色造成一次伤害后，若其与你势力不同，你弃置其一张手牌，若此时其手牌数不小于其体力，你回复1点体力否则摸一张牌。
 ]]--
 Mzhiyu = sgs.CreateTriggerSkill{
 	name = "Mzhiyu",
@@ -437,6 +437,16 @@ Mpinghe = sgs.CreateTriggerSkill{
 		local damage = data:toDamage()
 		local id = room:askForCardChosen(player, damage.to, "h", self:objectName())
 		room:throwCard(id, damage.to, player)
+		if damage.to:getHandcardNum() >= damage.to:getHp() then
+			if player:isWounded() then
+				local recover = sgs.RecoverStruct()
+					recover.who = player
+					recover.recover = 1
+				room:recover(player, recover)
+			else
+				player:drawCards(1)
+			end
+		end
 	end,
 }
 Mxinyang = sgs.CreateTriggerSkill{
@@ -506,7 +516,7 @@ sgs.LoadTranslationTable{
 	["Mpinghe"] = "平和",
 	["$Mpinghe"] = "肯定被我迷住了~",
 	["@pinghe"] = "平和",
-	[":Mpinghe"] = "副将技，锁定技，当你使用【杀】对目标角色造成一次伤害后，若其与你势力不同，你弃置其一张手牌。",
+	[":Mpinghe"] = "副将技，锁定技，当你使用【杀】对目标角色造成一次伤害后，若其与你势力不同，你弃置其一张手牌，若此时其手牌数不小于其体力，你回复1点体力否则摸一张牌。",
 	["Mxinyang"] = "信仰",
 	["xinyang_show"] = "请展示一张手牌。",
 	["$Mxinyang1"] = "这是天意！",
@@ -906,7 +916,7 @@ Mcrusader:addCompanion("Mcelestial")
 --[[
 【冲锋】锁定技，当你使用【杀】对目标角色造成一次伤害时，若其与你的距离大于1，此伤害+1。
 【荣光】副将技，当你处于濒死状态时，其他你所在队列里的角色可以弃置一张手牌并失去1点体力，令你回复1点体力。
-【神驹】主将技，锁定技，若你装备区有防御马，你与其他角色距离-1，摸牌阶段你额外摸一张牌。主将技，锁定技，若你装备区有进攻马，其他角色与你距离+1，你的手牌上限+2。
+【神驹】主将技，锁定技，若与你势力相同的角色装备区有防御马，你与其他角色距离-1，摸牌阶段你额外摸一张牌。主将技，锁定技，若与你势力相同的角色装备区有进攻马，其他角色与你距离+1，你的手牌上限+2。
 ]]--
 Mchongfeng = sgs.CreateTriggerSkill{
 	name = "Mchongfeng",
@@ -985,7 +995,14 @@ Mshenju = sgs.CreateDrawCardsSkill{
 	can_preshow = true,
 	can_trigger = function(self, event, room, player, data)
 		if player and player:isAlive() and player:hasSkill(self:objectName()) then
-			if player:getDefensiveHorse() then
+			local shenju
+			for _,p in sgs.qlist(room:getAlivePlayers()) do
+				if p:getDefensiveHorse() and p:isFriendWith(player) then
+					shenju = true
+					break
+				end
+			end
+			if shenju then
 				return self:objectName()
 			end
 		end
@@ -1005,19 +1022,46 @@ Mshenju = sgs.CreateDrawCardsSkill{
 Mshenju_distance = sgs.CreateDistanceSkill{
 	name = "#Mshenju_distance",
 	correct_func = function(self, from, to)
-		if from:getDefensiveHorse() and from:hasSkill("Mshenju") and from:hasShownSkill(Mshenju) then
-			return -1
+		if from:hasSkill("Mshenju") and from:hasShownSkill(Mshenju) then
+			local shenju
+			for _,p in sgs.qlist(from:getAliveSiblings()) do
+				if p:getDefensiveHorse() and p:isFriendWith(from) then
+					shenju = true
+					break
+				end
+			end
+			if shenju then
+				return -1
+			end
 		end
-		if to:getOffensiveHorse() and to:hasSkill("Mshenju") and to:hasShownSkill(Mshenju) then
-			return 1
+		if to:hasSkill("Mshenju") and to:hasShownSkill(Mshenju) then
+			local shenju
+			for _,p in sgs.qlist(to:getAliveSiblings()) do
+				if p:getOffensiveHorse() and p:isFriendWith(to) then
+					shenju = true
+					break
+				end
+			end
+			if shenju then
+				return 1
+			end
 		end
 	end,
 }
 Mshenju_max = sgs.CreateMaxCardsSkill{
 	name = "#Mshenju_max",
 	extra_func = function(self,player)
-		if player:getOffensiveHorse() and player:hasSkill("Mshenju") and player:hasShownSkill(Mshenju) then
-			return 2
+		if player:hasSkill("Mshenju") and player:hasShownSkill(Mshenju) then
+			local shenju
+			for _,p in sgs.qlist(player:getAliveSiblings()) do
+				if p:getOffensiveHorse() and p:isFriendWith(player) then
+					shenju = true
+					break
+				end
+			end
+			if shenju then
+				return 2
+			end
 		end
 	end,
 }
@@ -1047,7 +1091,7 @@ sgs.LoadTranslationTable{
 	["$Mshenju"] = "时刻准备！",
 	["#Mshenju_distance"] = "神驹",
 	["#Mshenju_max"] = "神驹",
-	[":Mshenju"] = "主将技，锁定技，若你装备区有防御马，你与其他角色距离-1，摸牌阶段你额外摸一张牌。主将技，锁定技，若你装备区有进攻马，其他角色与你距离+1，你的手牌上限+2。",
+	[":Mshenju"] = "主将技，锁定技，若与你势力相同的角色装备区有防御马，你与其他角色距离-1，摸牌阶段你额外摸一张牌。主将技，锁定技，若与你势力相同的角色装备区有进攻马，其他角色与你距离+1，你的手牌上限+2。",
 	["~Mcrusader"] = "骑士……陨落了！",
 	["cv:Mcrusader"] = "混沌骑士",
 	["illustrator:Mcrusader"] = "英雄无敌6",

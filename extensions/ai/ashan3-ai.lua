@@ -791,7 +791,7 @@ sgs.ai_skill_cardask["@yanmo_invoke"] = function(self, data)
     local cards = sgs.QList2Table(self.player:getCards("he"))
 	self:sortByUseValue(cards, true)
 	for _,cd in ipairs(cards) do
-	    if cd:isKindOf("EquiCard") then
+	    if cd:isKindOf("EquipCard") then
 		    has_card = cd
 			break
 		end

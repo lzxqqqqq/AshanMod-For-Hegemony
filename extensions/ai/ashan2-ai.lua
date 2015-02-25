@@ -282,7 +282,7 @@ end
 --雾霭
 sgs.ai_skill_invoke["Mwuai"] = function(self, data)
 	if not self:isWeak(self.player) then
-		local x = self.player:getPlayerNumWithSameKingdom()
+		local x = self.player:getPlayerNumWithSameKingdom("wuai")
 		x = math.min(x, 4)
 		local y = x - self.player:getHandcardNum()
 		if y > 1 then
@@ -782,8 +782,10 @@ end
 --黑镜
 sgs.ai_skill_invoke["Mheijing"] = function(self, data)
 	local damage = data:toDamage()
-	if self:isFriend(damage.from) then
-	    return false
+	if self.player:isWounded() then
+		if self:isFriend(damage.from) and self.player:getHp() > damage.from:getHp() then
+			return false
+		end
 	end
 	return true
 end

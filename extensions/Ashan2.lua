@@ -1324,7 +1324,7 @@ sgs.LoadTranslationTable{
 ]]--
 Mkirin = sgs.General(Ashan2, "Mkirin", "mi", 5)
 --[[
-*【根源】锁定技，当你进入濒死时，若你体力上限大于1，你减1点体力上限，然后回复体力至1并摸一张牌。
+*【根源】锁定技，当你进入濒死时，若你体力上限大于1，你减1点体力上限，然后回复体力至1并摸两张牌。
 【冰雹】当你使用【杀】对目标角色造成一次伤害时，你可以将其装备区所有牌返回至手牌，若如此做，此伤害+1。
 *【凌波】主将技，锁定技，判定阶段开始时，若你判定区不为空，你获得判定区所有牌，然后失去1点体力。
 *【雾霭】副将技，锁定技，出牌阶段开始时，若你的手牌数少于X张，你将手牌补至X张，然后失去1点体力（X为当前场上与你势力相同的人数且最大为4）。
@@ -1358,7 +1358,7 @@ Mgenyuan = sgs.CreateTriggerSkill{
 		local recover = sgs.RecoverStruct()
 			recover.recover = x
 		room:recover(player, recover)
-		player:drawCards(1)
+		player:drawCards(2)
 	end,
 }
 Mbingbao = sgs.CreateTriggerSkill{
@@ -1483,7 +1483,7 @@ sgs.LoadTranslationTable{
 	["Mgenyuan"] = "根源",
 	["$Mgenyuan1"] = "一个短暂的休眠。",
 	["$Mgenyuan2"] = "倍受鼓舞。",
-	[":Mgenyuan"] = "锁定技，当你进入濒死时，若你体力上限大于1，你减1点体力上限，然后回复体力至1并摸一张牌。",
+	[":Mgenyuan"] = "锁定技，当你进入濒死时，若你体力上限大于1，你减1点体力上限，然后回复体力至1并摸两张牌。",
 	["Mlingbo"] = "凌波",
 	["$Mlingbo"] = "噢，这一刻我等很久了。",
 	[":Mlingbo"] = "主将技，锁定技，判定阶段开始时，若你判定区不为空，你获得判定区所有牌，然后失去1点体力。",
@@ -1504,7 +1504,7 @@ sgs.LoadTranslationTable{
 ]]--
 Mhairyou = sgs.General(Ashan2, "Mhairyou", "mi", 3, false)
 --[[
-*【源泉】锁定技，当你进入濒死时，若你体力上限大于1，你减1点体力上限，然后回复体力至1并摸一张牌。锁定技，当你对攻击范围内的其他势力的角色造成一次雷属性伤害后，你增加1点体力上限。
+*【源泉】锁定技，当你进入濒死时，若你体力上限大于1，你减1点体力上限，然后回复体力至1并摸两张牌。锁定技，当你对攻击范围内的其他势力的角色造成一次雷属性伤害后，你增加1点体力上限。
 *【暴雪】当你对攻击范围内的角色造成一次无属性伤害后，你可以弃置一张锦囊牌然后选择一项：1.令其跳过下一次摸牌阶段；2.令其弃置一张手牌并跳过下一次出牌阶段；3.令其摸一张牌并跳过下一次弃牌阶段。
 *【凌云】主将技，锁定技，你的判定牌视为红桃K。主将技，锁定技，当你被其他角色指定为延时锦囊的目标时，你取消之。
 *【云迹】副将技，与你势力相同的角色摸牌阶段开始时，若其为被围攻角色，你可以令其将手牌数补充至围攻角色中的手牌数较大值。
@@ -1556,7 +1556,7 @@ Myuanquan = sgs.CreateTriggerSkill{
 				log.from = player
 				log.arg = self:objectName()
 			room:sendLog(log)
-			player:drawCards(1)
+			player:drawCards(2)
 		else
 			room:setPlayerProperty(player, "maxhp", sgs.QVariant(player:getMaxHp()+1))
 		end
@@ -1786,7 +1786,7 @@ sgs.LoadTranslationTable{
 	["$Myuanquan1"] = "刚才只是热热身。",
 	["$Myuanquan2"] = "我的时机到了。",
 	["#yuanquan"] = "由于 %arg 的效果，%from 体力上限+1！",
-	[":Myuanquan"] = "锁定技，当你进入濒死时，若你体力上限大于1，你减1点体力上限，然后回复体力至1并摸一张牌。锁定技，当你对攻击范围内的其他势力的角色造成一次雷属性伤害后，你增加1点体力上限。",
+	[":Myuanquan"] = "锁定技，当你进入濒死时，若你体力上限大于1，你减1点体力上限，然后回复体力至1并摸两张牌。锁定技，当你对攻击范围内的其他势力的角色造成一次雷属性伤害后，你增加1点体力上限。",
 	["Mlingyun"] = "凌云",
 	["#Mlingyun_change"] = "凌云",
 	["$Mlingyun1"] = "尘嚣是唯一的罪恶。",
@@ -3461,7 +3461,7 @@ sgs.LoadTranslationTable{
 Mvoid = sgs.General(Ashan2, "Mvoid", "mi", 3)
 --[[
 *【否定】你攻击范围内其他角色摸牌阶段结束时，若其体力大于你，你可以令其视为对其自身使用了一张【雷杀】：当其因此而受到伤害进行的伤害结算结束时，若其手牌数大于你，你获得其一张手牌。
-*【黑镜】主将技，锁定技，当你受到一名其他角色造成的伤害时，你有1/2的概率使之无效（若你已受伤,你可以交给来源一张手牌将伤害转移给他）。
+*【黑镜】主将技，锁定技，当你受到一名其他角色造成的伤害时：若你未受伤，你有1/2的概率防止该伤害；若你你已受伤，你有1/3的概率防止该伤害，且有1/3的概率将伤害转移给来源。
 *【不详】副将技，锁定技，你攻击范围内体力大于你的其他势力的角色出牌阶段最多使用X张手牌（X为你的当前体力）。
 ]]--
 Mfouding = sgs.CreateTriggerSkill{
@@ -3530,6 +3530,7 @@ Mheijing = sgs.CreateTriggerSkill{
 	end,
 	on_cost = function(self,event,room,player,data)
 		if player:hasShownSkill(self) or player:askForSkillInvoke(self:objectName(), data) then
+			room:notifySkillInvoked(player, self:objectName())
 			return true
 		end
 		return false
@@ -3537,42 +3538,56 @@ Mheijing = sgs.CreateTriggerSkill{
 	on_effect = function(self,event,room,player,data)
 		local damage = data:toDamage()
 		local target = damage.from
-		if math.random() < 0.5 then
-			room:notifySkillInvoked(player, self:objectName())
-			if player:isWounded() and not player:isKongcheng() and target:isAlive() then
-				local card = room:askForCard(player, ".|.|.|hand", "@heijing_invoke", data, sgs.Card_MethodNone)
-				if card then
-					room:broadcastSkillInvoke(self:objectName(), 2)
-					damage.from:obtainCard(card, false)
-					local log = sgs.LogMessage()
-						log.type = "#heijing2"
-						log.from = player
-						log.to:append(target)
-						log.arg = self:objectName()
-					room:sendLog(log)
-					local damage = data:toDamage()
-						damage.transfer = true
-						damage.to = target
-						damage.transfer_reason = "Mheijing"
-						local realdamage = sgs.QVariant()
-						realdamage:setValue(damage)
-					player:setTag("TransferDamage" , realdamage)
-					return true
-				end
+		if not player:isWounded() then
+			if math.random() < 0.5 then
+				room:broadcastSkillInvoke(self:objectName(), 1)
+				local log = sgs.LogMessage()
+					log.type = "#heijing1"
+					log.from = player
+					log.arg = self:objectName()
+				room:sendLog(log)
+				return true
+			else
+				room:broadcastSkillInvoke(self:objectName(), 3)
+				local log = sgs.LogMessage()
+					log.type = "#heijing3"
+					log.arg = self:objectName()
+				room:sendLog(log)
 			end
-			room:broadcastSkillInvoke(self:objectName(), 1)
-			local log = sgs.LogMessage()
-				log.type = "#heijing1"
-				log.from = player
-				log.arg = self:objectName()
-			room:sendLog(log)
-			return true
 		else
-			room:broadcastSkillInvoke(self:objectName(), 3)
-			local log = sgs.LogMessage()
-				log.type = "#heijing3"
-				log.arg = self:objectName()
-			room:sendLog(log)
+			local n = math.random(1,3)
+			if n == 1 then
+				room:broadcastSkillInvoke(self:objectName(), 1)
+				local log = sgs.LogMessage()
+					log.type = "#heijing1"
+					log.from = player
+					log.arg = self:objectName()
+				room:sendLog(log)
+				return true
+			elseif n == 2 then
+				room:broadcastSkillInvoke(self:objectName(), 2)
+				local log = sgs.LogMessage()
+					log.type = "#heijing2"
+					log.from = player
+					log.to:append(target)
+					log.arg = self:objectName()
+				room:sendLog(log)
+				room:getThread():delay(1500)
+				local damage = data:toDamage()
+					damage.transfer = true
+					damage.to = target
+					damage.transfer_reason = "Mheijing"
+					local realdamage = sgs.QVariant()
+					realdamage:setValue(damage)
+				player:setTag("TransferDamage" , realdamage)
+				return true
+			else
+				room:broadcastSkillInvoke(self:objectName(), 3)
+				local log = sgs.LogMessage()
+					log.type = "#heijing3"
+					log.arg = self:objectName()
+				room:sendLog(log)
+			end
 		end
 	end,
 }
@@ -3634,14 +3649,13 @@ sgs.LoadTranslationTable{
 	["$Mfouding2"] = "我将吞噬你。",
 	[":Mfouding"] = "你攻击范围内其他角色摸牌阶段结束时，若其体力大于你，你可以令其视为对其自身使用了一张【雷杀】：当其因此而受到伤害进行的伤害结算结束时，若其手牌数大于你，你获得其一张手牌。",
 	["Mheijing"] = "黑镜",
-	["@heijing_invoke"] = "是否交给伤害来源一张手牌将伤害转移给来源？",
 	["$Mheijing1"] = "我的虚无在膨胀。",
 	["$Mheijing2"] = "凝视深渊吧！",
 	["$Mheijing3"] = "谁逃脱黑洞？",
 	["#heijing1"] = "由于 %arg 的效果，%from 受到的伤害无效！",
 	["#heijing2"] = "由于 %arg 的效果，%from 受到的伤害由 %to 承受！",
 	["#heijing3"] = "技能 %arg 发动失败！",
-	[":Mheijing"] = "主将技，锁定技，当你受到一名其他角色造成的伤害时，你有1/2的概率使之无效（若你已受伤,你可以交给来源一张手牌将伤害转移给他）。",
+	[":Mheijing"] = "主将技，锁定技，当你受到一名其他角色造成的伤害时：若你未受伤，你有1/2的概率防止该伤害；若你你已受伤，你有1/3的概率防止该伤害，且有1/3的概率将伤害转移给来源。",
 	["Mbuxiang"] = "不详",
 	["$Mbuxiang"] = "一切都在我掌握之中。",
 	["@buxiang"] = "不详",
