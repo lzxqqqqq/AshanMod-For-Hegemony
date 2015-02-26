@@ -5,7 +5,7 @@
 --[[
     创建拓展包“亚山之殇-血洗模式”
 ]]--
-Ashan4 = sgs.Package("Ashan4")
+Ashan4 = sgs.Package("Ashan4", sgs.Package_GeneralPack)
 
 sgs.LoadTranslationTable{
     ["Ashan4"] = "血洗模式",

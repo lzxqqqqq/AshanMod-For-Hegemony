@@ -5,7 +5,7 @@
 --[[
     创建拓展包“亚山之殇-秘”
 ]]--
-Ashan2 = sgs.Package("Ashan2")
+Ashan2 = sgs.Package("Ashan2", sgs.Package_GeneralPack)
 
 sgs.LoadTranslationTable{
     ["Ashan2"] = "亚山之殇-秘",
@@ -231,7 +231,7 @@ Mpearl = sgs.General(Ashan2, "Mpearl", "mi", 3, false)
 Mpearl:addCompanion("Mkensei")
 --[[
 【烟波】结束阶段开始时，你可以展示牌堆顶X+1张牌（X为你已损失体力且最大为2），然后获得其中的红色牌并弃置其余的牌。
-*【蛇舞】摸牌阶段开始时，若你有手牌，你可以指定一名有手牌且已受伤的其他角色观看你的手牌,然后你选择一项：1.其获得其中的红色牌，然后其回复1点体力并弃置所有黑色手牌；2.其获得其中的黑色牌，然后其无法使用和打出红色手牌直到本回合结束。
+*【蛇舞】摸牌阶段开始时，若你有手牌，你可以指定一名有手牌且已受伤的其他角色观看你的手牌,然后你选择一项：1.其获得其中的红色牌，然后其弃置所有黑色手牌，若以此法弃置了至少一张手牌，其回复1点体力；2.其获得其中的黑色牌，然后其无法使用和打出红色手牌直到本回合结束。
 ]]--
 Myanbo = sgs.CreateTriggerSkill{
 	name = "Myanbo",
@@ -254,8 +254,8 @@ Myanbo = sgs.CreateTriggerSkill{
 		return false
 	end,
 	on_effect = function(self, event, room, player, data)
-		local x = player:getLostHp()+1
-		x = math.min(2, x)
+		local x = math.min(2, player:getLostHp())
+		x = x+1
 		local idlist = room:getNCards(x)
 		for _,ids in sgs.qlist(idlist) do
 			local reason = sgs.CardMoveReason(sgs.CardMoveReason_S_REASON_SHOW, player:objectName(),"", self:objectName(), "")
@@ -339,13 +339,6 @@ Mshewu = sgs.CreateTriggerSkill{
 				room:broadcastSkillInvoke(self:objectName(), 2)
 				target:obtainCard(red_cards, true)
 				room:getThread():delay(1000)
-				if target:isWounded() then
-					local recover = sgs.RecoverStruct()
-						recover.who = player
-						recover.recover = 1
-					room:recover(target, recover)
-					room:notifySkillInvoked(target, self:objectName())
-				end
 				local throw_cards = MemptyCard:clone()
 				for _, card in sgs.qlist(target:getHandcards()) do
 					if card:isBlack() then
@@ -354,6 +347,13 @@ Mshewu = sgs.CreateTriggerSkill{
 				end
 				if throw_cards:subcardsLength() > 0 then
 					room:throwCard(throw_cards, target)
+					if target:isWounded() then
+						local recover = sgs.RecoverStruct()
+							recover.who = player
+							recover.recover = 1
+						room:recover(target, recover)
+						room:notifySkillInvoked(target, self:objectName())
+					end
 				end
 			else
 				room:broadcastSkillInvoke(self:objectName(), 3)
@@ -430,7 +430,7 @@ sgs.LoadTranslationTable{
 	["shewu_black"] = "黑色",
 	["@shewu"] = "蛇舞",
 	["#shewu"] = "%from 无法打出和使用红色手牌直到本阶段结束！",
-	[":Mshewu"] = "摸牌阶段开始时，若你有手牌，你可以指定一名有手牌且已受伤的其他角色观看你的手牌,然后你选择一项：1.其获得其中的红色牌，然后其回复1点体力并弃置所有黑色手牌；2.其获得其中的黑色牌，然后其无法使用和打出红色手牌直到本回合结束。",
+	[":Mshewu"] = "摸牌阶段开始时，若你有手牌，你可以指定一名有手牌且已受伤的其他角色观看你的手牌,然后你选择一项：1.其获得其中的红色牌，然后其弃置所有黑色手牌，若以此法弃置了至少一张手牌，其回复1点体力；2.其获得其中的黑色牌，然后其无法使用和打出红色手牌直到本回合结束。",
 	["~Mpearl"] = "不能……再蛇行了……",
 	["cv:Mpearl"] = "娜迦海妖",
 	["illustrator:Mpearl"] = "英雄无敌6",
@@ -3462,7 +3462,7 @@ Mvoid = sgs.General(Ashan2, "Mvoid", "mi", 3)
 --[[
 *【否定】你攻击范围内其他角色摸牌阶段结束时，若其体力大于你，你可以令其视为对其自身使用了一张【雷杀】：当其因此而受到伤害进行的伤害结算结束时，若其手牌数大于你，你获得其一张手牌。
 *【黑镜】主将技，锁定技，当你受到一名其他角色造成的伤害时：若你未受伤，你有1/2的概率防止该伤害；若你你已受伤，你有1/3的概率防止该伤害，且有1/3的概率将伤害转移给来源。
-*【不详】副将技，锁定技，你攻击范围内体力大于你的其他势力的角色出牌阶段最多使用X张手牌（X为你的当前体力）。
+*【不详】副将技，锁定技，你攻击范围内体力不小于你的其他势力的角色出牌阶段最多使用X张非装备手牌（X为你的当前体力）。
 ]]--
 Mfouding = sgs.CreateTriggerSkill{
     name = "Mfouding",
@@ -3602,7 +3602,9 @@ Mbuxiang = sgs.CreateTriggerSkill{
 			if event == sgs.PreCardUsed then
 				if player:hasShownOneGeneral() and player:getPhase() == sgs.Player_Play then
 					local void =  room:findPlayerBySkillName(self:objectName())
-					if void and void:isAlive() and void:hasShownSkill(self) and void:inMyAttackRange(player) and void:hasShownOneGeneral() and not player:isFriendWith(void) and void:getHp() < player:getHp() then
+					if void and void:isAlive() and void:hasShownSkill(self) and void:inMyAttackRange(player) and void:hasShownOneGeneral() and not player:isFriendWith(void) and void:getHp() <= player:getHp() then
+						local use = data:toCardUse()
+						if not (use.card and not use.card:isKindOf("EquipCard")) then return "" end
 						local x = player:getMark("buxiang")
 						local y = void:getHp()
 						if x+1 < y then
@@ -3616,7 +3618,7 @@ Mbuxiang = sgs.CreateTriggerSkill{
 								log.from = player
 								log.arg = self:objectName()
 							room:sendLog(log)
-							room:setPlayerCardLimitation(player, "use", "BasicCard,EquipCard,TrickCard|.|.|hand", false)
+							room:setPlayerCardLimitation(player, "use", "BasicCard,TrickCard|.|.|hand", false)
 						end
 					end
 				end
@@ -3627,7 +3629,7 @@ Mbuxiang = sgs.CreateTriggerSkill{
 					end
 					if player:getMark("@buxiang") == 1 then
 						room:setPlayerMark(player, "@buxiang", 0)
-						room:removePlayerCardLimitation(player, "use", "BasicCard,EquipCard,TrickCard|.|.|hand")
+						room:removePlayerCardLimitation(player, "use", "BasicCard,TrickCard|.|.|hand")
 					end
 				end
 			end
@@ -3660,7 +3662,7 @@ sgs.LoadTranslationTable{
 	["$Mbuxiang"] = "一切都在我掌握之中。",
 	["@buxiang"] = "不详",
 	["#buxiang"] = "由于 %arg 的效果，%from 无法使用任何手牌直到其出牌阶段结束！",
-	[":Mbuxiang"] = "副将技，锁定技，你攻击范围内体力大于你的其他势力的角色出牌阶段最多使用X张手牌（X为你的当前体力）。",
+	[":Mbuxiang"] = "副将技，锁定技，你攻击范围内体力不小于你的其他势力的角色出牌阶段最多使用X张非装备手牌（X为你的当前体力）。",
 	["~Mvoid"] = "我的形态在消逝……",
 	["cv:Mvoid"] = "谜团",
 	["illustrator:Mvoid"] = "英雄无敌6",

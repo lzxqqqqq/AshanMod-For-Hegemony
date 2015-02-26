@@ -5,7 +5,7 @@
 --[[
     创建拓展包“亚山之殇-英”
 ]]--
-Ashan1 = sgs.Package("Ashan1")
+Ashan1 = sgs.Package("Ashan1", sgs.Package_GeneralPack)
 
 sgs.LoadTranslationTable{
     ["Ashan1"] = "亚山之殇-英",
@@ -3458,7 +3458,7 @@ Mylath:addCompanion("Mthunder")
 --[[
 *【探索】君主技，锁定技，你拥有“不倦之翼”。
 “不倦之翼”锁定技，与你相同势力的角色出牌阶段结束时，若其有手牌，其可以观看一名其距离1内手牌数大于他的其他势力的角色的手牌：若其中存在其手牌区没有花色的牌，其获得之；若不存在，其弃置所有手牌。
-*【自由】锁定技，你的摸牌阶段始终视为出牌阶段。锁定技，你的出牌阶段开始时，若你手牌数小于任一攻击范围内其他势力的角色或你没有手牌，你摸两张牌。
+*【自由】锁定技，你的摸牌阶段始终视为出牌阶段。锁定技，你的出牌阶段开始时，若你手牌数小于任一攻击范围内其他势力的角色或你手牌数不大于一张，你摸两张牌。
 ]]--
 Mtansuo = sgs.CreateTriggerSkill{
 	name = "Mtansuo$",
@@ -3614,7 +3614,7 @@ Mziyou_effect = sgs.CreateTriggerSkill{
 						break
 					end
 				end
-				if less or player:isKongcheng() then
+				if less or player:getHandcardNum() < 2 then
 					return self:objectName()
 				end
 			end
@@ -3661,7 +3661,7 @@ sgs.LoadTranslationTable{
 	["$Mziyou3"] = "不用担心，人人有份。",
 	["#ziyou1"] = "%from 的摸牌阶段转化为出牌阶段!",
 	["#ziyou2"] = "%from 转化的出牌阶段结束!",
-	[":Mziyou"] = "锁定技，你的摸牌阶段始终视为出牌阶段。锁定技，你的出牌阶段开始时，若你手牌数小于任一攻击范围内其他势力的角色或你没有手牌，你摸两张牌。",
+	[":Mziyou"] = "锁定技，你的摸牌阶段始终视为出牌阶段。锁定技，你的出牌阶段开始时，若你手牌数小于任一攻击范围内其他势力的角色或你手牌数不大于一张，你摸两张牌。",
 	["~Mylath"] = "不……",
 	["cv:Mylath"] = "风暴之灵",
 	["illustrator:Mylath"] = "英雄无敌6",

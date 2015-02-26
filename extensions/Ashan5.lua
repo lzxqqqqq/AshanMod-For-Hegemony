@@ -5,7 +5,7 @@
 --[[
     创建拓展包“亚山之殇-争锋模式”
 ]]--
-Ashan5 = sgs.Package("Ashan5")
+Ashan5 = sgs.Package("Ashan5", sgs.Package_GeneralPack)
 
 sgs.LoadTranslationTable{
     ["Ashan5"] = "争锋模式",

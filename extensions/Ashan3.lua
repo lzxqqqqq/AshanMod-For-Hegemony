@@ -5,7 +5,7 @@
 --[[
     创建拓展包“亚山之殇-暗”
 ]]--
-Ashan3 = sgs.Package("Ashan3")
+Ashan3 = sgs.Package("Ashan3", sgs.Package_GeneralPack)
 
 sgs.LoadTranslationTable{
     ["Ashan3"] = "亚山之殇-暗",
@@ -709,7 +709,7 @@ Mlamasu = sgs.General(Ashan3, "Mlamasu", "an", 4, false)
 Mlamasu:addCompanion("Mghoul")
 Mlamasu:addCompanion("Mvampire")
 --[[
-*【虫息】锁定技，当你对攻击范围内其他角色造成一次伤害后，其获得1枚“虫”标记（最多2枚）。锁定技，拥有“虫”标记的角色若已受伤，其手牌上限-X（X为“虫”标记数目），其回复体力后进行一次判定，若为红色，移除1枚“虫”标记。
+*【虫息】锁定技，当你对攻击范围内其他角色造成一次伤害后，其获得1枚“虫”标记（最多2枚）。锁定技，拥有“虫”标记的角色若已受伤，其手牌上限-X（X为“虫”标记数目），其回复体力后进行一次判定，若为红色，移除1枚“虫”标记然后你摸一张牌。
 *【瘟疫】主将技，限定技，当你处于濒死状态时，你可以令拥有“虫”标记的角色依次失去X点体力并移除所有“虫”标记（X为“虫”标记数目），然后你回复体力至Y（Y为受到此技能影响的角色数目）。
 ]]--
 Mchongxi = sgs.CreateTriggerSkill{
@@ -766,6 +766,10 @@ Mchongxi_recover = sgs.CreateTriggerSkill{
 					log.type = "#chongxi2"
 					log.from = player
 				room:sendLog(log)
+				local lamasu =  room:findPlayerBySkillName("Mchongxi")
+				if lamasu and lamasu:isAlive() then
+					lamasu:drawCards(1)
+				end
 			end
 		end
 	end,
@@ -824,6 +828,7 @@ Mwenyi = sgs.CreateTriggerSkill{
 					room:getThread():delay(500)
 				end
 			end
+			if not player:isAlive() then return end
 			x = x - player:getHp()
 			local recover = sgs.RecoverStruct()
 				recover.recover = x
@@ -851,7 +856,7 @@ sgs.LoadTranslationTable{
 	["#chongxi1"] = "%from 的手牌上限-1！",
 	["#chongxi2"] = "%from 的手牌上限+1！",
 	["@chong"] = "虫",
-	[":Mchongxi"] = "锁定技，当你对攻击范围内其他角色造成一次伤害后，其获得1枚“虫”标记（最多2枚）。锁定技，拥有“虫”标记的角色若已受伤，其手牌上限-X（X为“虫”标记数目），其回复体力后进行一次判定，若为红色，移除1枚“虫”标记。",
+	[":Mchongxi"] = "锁定技，当你对攻击范围内其他角色造成一次伤害后，其获得1枚“虫”标记（最多2枚）。锁定技，拥有“虫”标记的角色若已受伤，其手牌上限-X（X为“虫”标记数目），其回复体力后进行一次判定，若为红色，移除1枚“虫”标记然后你摸一张牌。",
 	["Mwenyi"] = "瘟疫",
 	[":Mwenyi"] = "主将技，限定技，当你处于濒死状态时，你可以令拥有“虫”标记的角色依次失去X点体力并移除所有“虫”标记（X为“虫”标记数目），然后你回复体力至Y（Y为受到此技能影响的角色数目）。",
 	["$Mwenyi"] = "别死了亲爱的！（啃噬）",
@@ -4027,7 +4032,7 @@ Mxunhuan = sgs.CreateTriggerSkill{
 			local death = data:toDeath()
 			local damage = death.damage
 			if player:objectName() == death.who:objectName() and damage then
-				if damage.from and not damage.from:isKongcheng() and damage.from:hasSkill(self:objectName()) then
+				if damage.from and damage.from:hasSkill(self:objectName()) then
 					local skill_list = {}
 					for _,skill in sgs.qlist(player:getVisibleSkillList()) do
 						if not (table.contains(skill_list, skill:objectName()) or skill:isLordSkill() or skill:isAttachedLordSkill()) then
