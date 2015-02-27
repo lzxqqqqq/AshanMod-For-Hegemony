@@ -1310,12 +1310,10 @@ void ServerPlayer::showGeneral(bool head_general, bool trigger_event, bool sendL
 
         foreach (ServerPlayer *p, room->getOtherPlayers(this, true))
             room->notifyProperty(p, this, "head_skin_id");
-		// M&M 从这里开始添加	
-		bool false_lord = false; // 在最先定义假君主的概念
 
         if (!hasShownGeneral2()) {
             QString kingdom = room->getMode() == "custom_scenario" ? getKingdom() : getGeneral()->getKingdom();
-            // 争锋模式相关
+            // 争锋模式相关 M&M
 			QStringList kingdoms = Sanguosha->getKingdoms();
 			foreach (QString kd, kingdoms){
 				if (getMark(kd) > 0){ // 争锋模式的势力改变
@@ -1325,7 +1323,6 @@ void ServerPlayer::showGeneral(bool head_general, bool trigger_event, bool sendL
 				}
 			}
             room->setPlayerProperty(this, "kingdom", kingdom);
-            room->broadcastProperty(this, "kingdom"); // 再强调一次势力
 
             QString role = HegemonyMode::GetMappedRole(kingdom);
             int i = 1;
@@ -1341,19 +1338,16 @@ void ServerPlayer::showGeneral(bool head_general, bool trigger_event, bool sendL
                             ++i;
                     }
                 }
-            }
-			else {
-				if (getMark("@zhengfeng_lord") == 0) { // 争锋模式中第二名君主变为野心家
+            } else {
+				if (getMark("@zhengfeng_lord") == 0) { // 第二名君主变为野心家
 					foreach (ServerPlayer *p, room->getOtherPlayers(this, true)) {
 						if (p->getKingdom() == kingdom) {
-							if ((p->getGeneral()->isLord() || p->getMark("@zhengfeng_lord") > 0) && p->getRole() != "careerist") {
-								false_lord = true;
+							if (p->getGeneral()->isLord() || p->getMark("@zhengfeng_lord") > 0) {
+								role = "careerist";
 								break;
 							}
 						}
 					}
-					if (false_lord)
-						role = "careerist";
 				}
 			}
 
@@ -1363,10 +1357,23 @@ void ServerPlayer::showGeneral(bool head_general, bool trigger_event, bool sendL
 			}
 			
             room->setPlayerProperty(this, "role", role);
-            room->broadcastProperty(this, "role"); // 再强调一次身份
-        }
+        } else {
+			if (getGeneral()->isLord() && getMark("@zhengfeng_lord") == 0 && getRole() != "careerist") {
+				foreach (ServerPlayer *p, room->getOtherPlayers(this, true)) {
+					if (p->getKingdom() == getKingdom()) {
+						if ((p->getGeneral()->isLord() || p->getMark("@zhengfeng_lord") > 0) && p->hasShownGeneral1()) {
+							room->setPlayerProperty(this, "role", "careerist");
+							room->broadcastProperty(this, "kingdom");
+							room->broadcastProperty(this, "role");
+							break;
+						}
+					}
+				}
+			}
+				
+		}
 
-        if (isLord() && !false_lord && getMark("@zhengfeng_lord") == 0) { // 此处防止第二君主武将出现刷新所有武将势力
+        if (isLord() && getRole() != "careerist") { // 普通模式下防止第二君主刷新势力
             QString kingdom = getKingdom();
             foreach (ServerPlayer *p, room->getPlayers()) {
                 if (p->getKingdom() == kingdom && p->getRole() == "careerist"){
@@ -1439,20 +1446,16 @@ void ServerPlayer::showGeneral(bool head_general, bool trigger_event, bool sendL
                             ++i;
                     }
                 }
-            }
-			else {
-				if (getMark("@zhengfeng_lord") == 0) { // 争锋模式中第二名君主变为野心家
-					bool false_lord = false;
+            } else {
+				if (getMark("@zhengfeng_lord") == 0) { // 第二名君主变为野心家
 					foreach (ServerPlayer *p, room->getOtherPlayers(this, true)) {
 						if (p->getKingdom() == kingdom) {
-							if ((p->getGeneral()->isLord() || p->getMark("@zhengfeng_lord") > 0) && p->getRole() != "careerist") {
-								false_lord = true;
+							if (p->getGeneral()->isLord() || p->getMark("@zhengfeng_lord") > 0) {
+								role = "careerist";
 								break;
 							}
 						}
 					}
-					if (false_lord)
-						role = "careerist";
 				}
 			}
 
@@ -1460,7 +1463,7 @@ void ServerPlayer::showGeneral(bool head_general, bool trigger_event, bool sendL
 				room->setPlayerMark(this, "zhengfeng_careerist", 0);
 				role = "careerist";
 			}
-            //
+            // 结束
             room->setPlayerProperty(this, "role", role);
         }
     }

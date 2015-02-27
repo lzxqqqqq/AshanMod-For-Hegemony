@@ -4036,7 +4036,8 @@ Mxunhuan = sgs.CreateTriggerSkill{
 					local skill_list = {}
 					for _,skill in sgs.qlist(player:getVisibleSkillList()) do
 						if not (table.contains(skill_list, skill:objectName()) or skill:isLordSkill() or skill:isAttachedLordSkill()) then
-							if skill:canPreshow() and not damage.from:hasSkill(skill) and not ((skill:relateToPlace(true) or skill:relateToPlace(false))) then
+--							if skill:canPreshow() and not damage.from:hasSkill(skill) and not ((skill:relateToPlace(true) or skill:relateToPlace(false))) then
+							if skill:getFrequency() ~= sgs.Skill_Compulsory and not damage.from:hasSkill(skill) then
 								table.insert(skill_list, skill:objectName())
 							end
 						end
@@ -4092,7 +4093,7 @@ Mxunhuan = sgs.CreateTriggerSkill{
 			local damage = data:toDeath().damage
 			local skill_list = {}
 			for _,skill in sgs.qlist(player:getVisibleSkillList()) do
-				if not (table.contains(skill_list, skill:objectName()) or skill:inherits("SPConvertSkill") or skill:isAttachedLordSkill()) then
+				if not (table.contains(skill_list, skill:objectName()) or skill:isLordSkill() or skill:isAttachedLordSkill()) then
 					if skill:getFrequency() ~= sgs.Skill_Compulsory and not damage.from:hasSkill(skill) then
 --					if not damage.from:hasSkill(skill) then
 						table.insert(skill_list, skill:objectName())
