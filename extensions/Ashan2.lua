@@ -714,7 +714,7 @@ sgs.LoadTranslationTable{
 Myukionna = sgs.General(Ashan2, "Myukionna", "mi", 3, false)
 --[[
 【霜形】你的回合外，当你成为黑桃基本牌或黑桃锦囊的目标后，在其结算后，你可以弃置一张手牌获得之，若你弃置的手牌为黑桃花色，你摸一张牌。
-*【魔性】锁定技，你的红桃手牌视为黑桃牌。锁定技，当你成为男性角色使用的红色锦囊的目标时，你取消之。
+*【魔性】锁定技，你的红桃手牌视为黑桃牌。锁定技，当你成为异性角色使用的红色锦囊的目标时，你取消之。
 【冻结】主将技，限定技，弃牌阶段开始时，你可以弃置三张不同类型的黑桃牌，然后指定一名装备区不为空的其他势力的角色，其弃置装备区所有牌并无法使用装备牌。
 ]]--
 Mbingjing = sgs.CreateTriggerSkill{
@@ -961,7 +961,7 @@ sgs.LoadTranslationTable{
 	["#Mmoxing_change"] = "魔性",
 	["$Mmoxing1"] = "（轻笑）",
 	["$Mmoxing2"] = "没人能看到我。",
-	[":Mmoxing"] = "锁定技，你的红桃手牌视为黑桃牌。锁定技，当你成为男性角色使用的红色锦囊的目标时，你取消之。",
+	[":Mmoxing"] = "锁定技，你的红桃手牌视为黑桃牌。锁定技，当你成为异性角色使用的红色锦囊的目标时，你取消之。",
 	["Mdongjie"] = "冻结",
 	["$Mdongjie"] = "你命中注定要变得晶莹剔透。",
 	[":Mdongjie"] = "主将技，限定技，弃牌阶段开始时，你可以弃置三张不同类型的黑桃牌，然后指定一名装备区不为空的其他势力的角色，其弃置装备区所有牌并无法使用装备牌。",
@@ -3602,9 +3602,9 @@ Mbuxiang = sgs.CreateTriggerSkill{
 			if event == sgs.PreCardUsed then
 				if player:hasShownOneGeneral() and player:getPhase() == sgs.Player_Play then
 					local void =  room:findPlayerBySkillName(self:objectName())
-					if void and void:isAlive() and void:hasShownSkill(self) and void:inMyAttackRange(player) and void:hasShownOneGeneral() and not player:isFriendWith(void) and void:getHp() <= player:getHp() then
+					if void and void:isAlive() and void:hasShownSkill(self) and void:inMyAttackRange(player) and void:hasShownOneGeneral() and not player:isFriendWith(void) then
 						local use = data:toCardUse()
-						if not (use.card and not use.card:isKindOf("EquipCard")) then return "" end
+						if not (use.card and not use.card:isKindOf("EquipCard") and not use.card:isKindOf("SkillCard")) then return "" end
 						local x = player:getMark("buxiang")
 						local y = void:getHp()
 						if x+1 < y then

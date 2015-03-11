@@ -1721,7 +1721,7 @@ sgs.LoadTranslationTable{
 Mcrusher = sgs.General(Ashan1, "Mcrusher", "ying", 4)
 --[[
 【饮血】锁定技，你的回合外，当你受到1点伤害时，你获得1枚“饮血”标记；出牌阶段，你使用【杀】造成的第一次伤害+X（X为当前“饮血”标记数且最大为3）；结束阶段开始时，你移除所有“饮血”标记。
-*【蹈锋】副将技，当你造成一次伤害后，若该伤害大于1点，你可以摸一张牌，若你已受伤，你回复1点体力。
+*【蹈锋】副将技，当你造成一次伤害后，若该伤害大于1点：若你已受伤，你可以回复1点体力；否则你可以摸一张牌。
 *【强攻】主将技，锁定技，此武将牌上单独的阴阳鱼个数-1。主将技，出牌阶段限一次，当你使用的【杀】被【闪】抵消后，你可以进行一次判定：若为红色，你视为对该角色使用了一张【雷杀】。
 ]]--
 Myinxue = sgs.CreateTriggerSkill{
@@ -1815,13 +1815,14 @@ Mdaofeng = sgs.CreateTriggerSkill{
 		return false
 	end,
 	on_effect = function(self,event,room,player,data)
-		player:drawCards(1)
 		if player:isWounded() then
 			local recover = sgs.RecoverStruct()
 				recover.who = player
 				recover.recover = 1
 			room:recover(player, recover)
 			room:notifySkillInvoked(player, self:objectName())
+		else
+			player:drawCards(1)
 		end
 	end,
 }
@@ -1890,7 +1891,7 @@ sgs.LoadTranslationTable{
 	["Mdaofeng"] = "蹈锋",
 	["$Mdaofeng1"] = "袭击他们。",
 	["$Mdaofeng2"] = "擦亮獠牙。",
-	[":Mdaofeng"] = "副将技，当你造成一次伤害后，若该伤害大于1点，你可以摸一张牌，若你已受伤，你回复1点体力。",
+	[":Mdaofeng"] = "副将技，当你造成一次伤害后，若该伤害大于1点：若你已受伤，你可以回复1点体力；否则你可以摸一张牌。",
 	["Mqianggong"] = "强攻",
 	["$Mqianggong1"] = "撕裂和猛击，加倍的！",
 	["$Mqianggong2"] = "我应该更凶猛些。",

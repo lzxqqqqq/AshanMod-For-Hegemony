@@ -29,5 +29,7 @@ return
 	["$zhengfeng_2"] = "终日蛰伏只为今朝！",
 	["$zhengfeng_3"] = "吾之野心终有所成！",
 	["#zhengfeng1"] = "争锋模式已经开启。",
-	["#zhengfeng2"] = "痛失爱臣 %to，%from 身心俱疲！",
+	["#zhengfeng2"] = "%from成为%arg 势力的领主，为他而战吧！",
+	["#zhengfeng3"] = "痛失爱臣 %to，%from 身心俱疲！",
+	
 }

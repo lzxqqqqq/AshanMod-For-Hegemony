@@ -1296,7 +1296,7 @@ sgs.LoadTranslationTable{
 ]]--
 Mwraith = sgs.General(Ashan3, "Mwraith", "an", 4)
 --[[
-【枯萎】锁定技，其他势力的角色死亡时，若其与你的距离不大于1且你已受伤，你回复1点体力，否则你与其余角色的距离-1。
+【枯萎】锁定技，其他势力的角色死亡时，若其与你的距离不为1且你已受伤，你回复1点体力，否则你与其余角色的距离-1。
 【衰老】结束阶段开始时，你可以弃置一张基本牌令一名攻击范围内已受伤其他角色进行一次判定：若结果为红桃，其摸一张牌；否则你摸一张牌且直到你下回合开始时其手牌上限-X（X为其已损失体力值）。
 *【奴役】主将技，限定技，弃牌阶段开始时，若你已受伤，你可以正面朝上交给一名其他角色三张不同类型的牌，将其视为“龙仆”并回复1点体力。锁定技，当你受到一点伤害后，“龙仆”摸一张牌然后选择一项：1.交给你两张手牌；2.其失去1点体力使你回复1点体力。
 *【永暗】副将技，准备阶段开始时，若你区域内没有牌，你可以弃置场上装备区所有牌。
@@ -1329,7 +1329,7 @@ Mkuwei = sgs.CreateTriggerSkill{
 			log.from = player
 		room:sendLog(log)
 		local death = data:toDeath()
-		if player:isWounded() and player:distanceTo(death.who) < 2 then
+		if player:isWounded() and player:distanceTo(death.who) == 1 then
 			local Recover = sgs.RecoverStruct()
 			    Recover.recover = 1
 				Recover.who = player
@@ -1656,7 +1656,7 @@ sgs.LoadTranslationTable{
 	["$Mkuwei"] = "捕捉你的灵魂！",
 	["#kuwei"] = "%from 吸收了死者的灵魂！",
 	["@kuwei"] = "枯萎",
-	[":Mkuwei"] = "锁定技，其他势力的角色死亡时，若其与你的距离不大于1且你已受伤，你回复1点体力，否则你与其余角色的距离-1。",
+	[":Mkuwei"] = "锁定技，其他势力的角色死亡时，若其与你的距离不为1且你已受伤，你回复1点体力，否则你与其余角色的距离-1。",
 	["Mshuailao"] = "衰老",
 	["#Mshuailao_max"] = "衰老",
 	["$Mshuailao1"] = "你现在孤立无援！",
@@ -2424,7 +2424,7 @@ sgs.LoadTranslationTable{
 Mlilim = sgs.General(Ashan3, "Mlilim", "an", 3, false)
 --[[
 【愉悦】你使用【杀】指定一名异性目标后，你可以弃置一张手牌（若你已受伤则不弃）令该角色不能使用【闪】对此【杀】进行响应，若如此做，其摸一张牌。
-*【诱惑】摸牌阶段，若你手牌数小于体力上限，你可以放弃摸牌，改为选择一个颜色并观看一名异性角色的手牌，然后你获得其所有与你所选颜色相同的手牌：若以此法获得至少三张手牌，其可以令你将武将牌叠置。
+*【诱惑】摸牌阶段，若你手牌数小于体力上限，你可以放弃摸牌，改为选择一个颜色并观看一名异性角色的手牌，然后你获得其所有与你所选颜色相同的手牌：若以此法获得至少三张手牌，其可以令你将武将牌叠置；若以此法没有获得手牌，你摸一张牌。
 ]]--
 Myuyue = sgs.CreateTriggerSkill{
 	name = "Myuyue",
@@ -2555,6 +2555,7 @@ Myouhuo = sgs.CreateTriggerSkill{
 					end
 				end
 			else
+				player:drawCards(1)
 				room:broadcastSkillInvoke(self:objectName(), 3)
 			end
 			return true
@@ -2584,7 +2585,7 @@ sgs.LoadTranslationTable{
 	["youhuo_black"] = "黑丝诱惑",
 	["youhuo_yes"] = "推倒她",
 	["youhuo_no"] = "不推倒",
-	[":Myouhuo"] = "摸牌阶段，若你手牌数小于体力上限，你可以放弃摸牌，改为选择一个颜色并观看一名异性角色的手牌，然后你获得其所有与你所选颜色相同的手牌：若以此法获得至少三张手牌，其可以令你将武将牌叠置。",	
+	[":Myouhuo"] = "摸牌阶段，若你手牌数小于体力上限，你可以放弃摸牌，改为选择一个颜色并观看一名异性角色的手牌，然后你获得其所有与你所选颜色相同的手牌：若以此法获得至少三张手牌，其可以令你将武将牌叠置；若以此法没有获得手牌，你摸一张牌。",	
 	["~Mlilim"] = "这是名为死亡的痛苦。",
 	["cv:Mlilim"] = "痛苦女王",
 	["illustrator:Mlilim"] = "英雄无敌6",
