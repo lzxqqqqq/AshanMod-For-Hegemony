@@ -533,7 +533,7 @@ sgs.LoadTranslationTable{
 ]]--
 Mgriffin = sgs.General(Ashan1, "Mgriffin", "ying", 4)
 --[[
-【反击】当你受到攻击范围内其他角色造成的一次伤害后，你可以弃置一张基本牌视为对其使用了一张【杀】。
+【反击】当你受到攻击范围内其他角色造成的一次伤害后，你可以弃置一张基本牌（若你武将牌已叠置则不弃）视为对其使用了一张【杀】。
 【俯冲】弃牌阶段结束时，若你的武将牌未叠置，你可以摸一张牌并将你的武将牌叠置。锁定技，当你成为【杀】和【决斗】的目标时，若你武将牌已叠置，你取消之。锁定技，当你的武将牌取消叠置时，你视为对一名其他角色使用了一张【杀】。
 ]]--
 Mfanji = sgs.CreateTriggerSkill{
@@ -554,7 +554,7 @@ Mfanji = sgs.CreateTriggerSkill{
 						break
 					end
 				end
-				if basic then
+				if basic or not player:faceUp() then
 					return self:objectName()
 				end
 			end
@@ -562,9 +562,16 @@ Mfanji = sgs.CreateTriggerSkill{
 		return ""
 	end,
 	on_cost = function(self,event,room,player,data)
-		if room:askForCard(player, "BasicCard", "@fanji_invoke", data, sgs.Card_MethodDiscard) then
-			room:broadcastSkillInvoke(self:objectName())
-			return true
+		if player:faceUp() then
+			if room:askForCard(player, "BasicCard", "@fanji_invoke", data, sgs.Card_MethodDiscard) then
+				room:broadcastSkillInvoke(self:objectName())
+				return true
+			end
+		else
+			if room:askForSkillInvoke(player, self:objectName(), data) then
+				room:broadcastSkillInvoke(self:objectName())
+				return true
+			end
 		end
 		return false
 	end,
@@ -694,7 +701,7 @@ sgs.LoadTranslationTable{
 	["Mfanji"] = "反击",
 	["$Mfanji"] = "送你去死!",
 	["@fanji_invoke"] = "是否弃置一张基本牌发动技能“反击”？",
-	[":Mfanji"] = "当你受到攻击范围内其他角色造成的一次伤害后，你可以弃置一张基本牌视为对其使用了一张【杀】。",
+	[":Mfanji"] = "当你受到攻击范围内其他角色造成的一次伤害后，你可以弃置一张基本牌（若你武将牌已叠置则不弃）视为对其使用了一张【杀】。",
 	["Mfuchong"] = "俯冲",
 	["#Mfuchong_avoid"] = "俯冲",
 	["$Mfuchong1"] = "我要飞得更高！",
@@ -1573,7 +1580,7 @@ lord_Melrath = sgs.General(Ashan1, "lord_Melrath$", "ying", 4, true, true)
 Melrath:addCompanion("Mmichael")
 --[[
 *【辉耀】君主技，锁定技，你拥有“圣光之眼”。
-“圣光之眼”锁定技，当你攻击范围内相同势力的其他角色对其他势力角色造成/受到其他势力角色造成的一次伤害时，若其体力小于你，你令该伤害+1/-1。
+“圣光之眼”锁定技，当你攻击范围内体力小于你的相同势力的角色对其他势力角色造成/受到其他势力角色造成的一次伤害时，你令该伤害+1/-1。
 *【正义】当其他势力的角色造成一次伤害后，若其拥有的牌数不小于受到伤害的角色，你可以令其/受伤害的角色弃置/摸X张牌（X为你已损失体力且最大为2）。
 ]]--
 Mhuiyao = sgs.CreateTriggerSkill{
@@ -1696,7 +1703,7 @@ sgs.LoadTranslationTable{
 	["$Mhuiyao1"] = "封印你的命运。",
 	["$Mhuiyao2"] = "我履行了我的承诺。",
 	["#DamageLess"] = "由于 %arg 的效果，%from 造成的伤害-1。",
-	[":Mhuiyao"] = "君主技，锁定技，你拥有“圣光之眼”。\n\n“圣光之眼”\n锁定技，当你攻击范围内相同势力的其他角色对其他势力角色造成/受到其他势力角色造成的一次伤害时，若其体力小于你，你令该伤害+1/-1。",
+	[":Mhuiyao"] = "君主技，锁定技，你拥有“圣光之眼”。\n\n“圣光之眼”\n锁定技，当你攻击范围内体力小于你的相同势力的角色对其他势力角色造成/受到其他势力角色造成的一次伤害时，你令该伤害+1/-1。",
 	["Mzhengyi"] = "正义",
 	["$Mzhengyi1"] = "正如我所预见的！",
 	["$Mzhengyi2"] = "结局早已注定。",
@@ -1722,7 +1729,7 @@ Mcrusher = sgs.General(Ashan1, "Mcrusher", "ying", 4)
 --[[
 【饮血】锁定技，你的回合外，当你受到1点伤害时，你获得1枚“饮血”标记；出牌阶段，你使用【杀】造成的第一次伤害+X（X为当前“饮血”标记数且最大为3）；结束阶段开始时，你移除所有“饮血”标记。
 *【蹈锋】副将技，当你造成一次伤害后，若该伤害大于1点：若你已受伤，你可以回复1点体力；否则你可以摸一张牌。
-*【强攻】主将技，锁定技，此武将牌上单独的阴阳鱼个数-1。主将技，出牌阶段限一次，当你使用的【杀】被【闪】抵消后，你可以进行一次判定：若为红色，你视为对该角色使用了一张【雷杀】。
+*【强攻】主将技，出牌阶段限一次，当你使用的【杀】被【闪】抵消后，若你已受伤，你可以进行一次判定：若为红色，你视为对该角色使用了一张【雷杀】。
 ]]--
 Myinxue = sgs.CreateTriggerSkill{
 	name = "Myinxue",  
@@ -1826,7 +1833,6 @@ Mdaofeng = sgs.CreateTriggerSkill{
 		end
 	end,
 }
-Mcrusher:setHeadMaxHpAdjustedValue(-1)
 Mqianggong = sgs.CreateTriggerSkill{
 	name = "Mqianggong",
 	frequency = sgs.Skill_NotFrequent,
@@ -1835,7 +1841,7 @@ Mqianggong = sgs.CreateTriggerSkill{
 	can_preshow = true,
 	can_trigger = function(self, event, room, player, data)
 		if player and player:isAlive() and player:hasSkill(self:objectName()) then
-			if player:getPhase() == sgs.Player_Play and not player:hasFlag("qianggong") then
+			if player:getPhase() == sgs.Player_Play and player:isWounded() and not player:hasFlag("qianggong") then
 				return self:objectName()
 			end
 		end
@@ -1895,7 +1901,7 @@ sgs.LoadTranslationTable{
 	["Mqianggong"] = "强攻",
 	["$Mqianggong1"] = "撕裂和猛击，加倍的！",
 	["$Mqianggong2"] = "我应该更凶猛些。",
-	[":Mqianggong"] = "主将技，锁定技，此武将牌上单独的阴阳鱼个数-1。主将技，出牌阶段限一次，当你使用的【杀】被【闪】抵消后，你可以进行一次判定：若为红色，你视为对该角色使用了一张【雷杀】。",
+	[":Mqianggong"] = "主将技，出牌阶段限一次，当你使用的【杀】被【闪】抵消后，你可以进行一次判定：若为红色，你视为对该角色使用了一张【雷杀】。",
 	["~Mcrusher"] = "我最后的战斗！",
 	["cv:Mcrusher"] = "熊战士",
 	["illustrator:Mcrusher"] = "英雄无敌6",
@@ -2814,8 +2820,8 @@ Mpanther = sgs.General(Ashan1, "Mpanther", "ying", 4)
 --珠联璧合：碎击兵
 Mpanther:addCompanion("Mcrusher")
 --[[
-*【爪牙】当你使用的【杀】被【闪】抵消后，你可以摸一张牌，若如此做，你须对其再使用一张【杀】且此【杀】造成的伤害+1，否则对方弃置你一张牌。
-*【狂舞】限定技，弃牌阶段开始时，若你装备区有武器和防具，你可以弃置该防具视为对攻击范围内体力大于你的其他势力角色使用了一张【杀】。
+*【爪牙】当你使用的普通【杀】被【闪】抵消后，你可以摸一张牌，若如此做，你须对其再使用一张【杀】且此【杀】造成的伤害+1，否则对方弃置你一张牌。
+*【狂舞】限定技，弃牌阶段开始时，若你装备区有武器和防具，你可以弃置该防具视为对攻击范围内体力不小于你的其他势力角色使用了一张【杀】。
 ]]--
 Mzhaoya = sgs.CreateTriggerSkill{
 	name = "Mzhaoya",
@@ -2831,7 +2837,7 @@ Mzhaoya = sgs.CreateTriggerSkill{
 			else
 				local damage = data:toDamage()
 				local card = damage.card
-				if damage.card and damage.card:isKindOf("Slash") and not (damage.chain or damage.transfer) and player:hasFlag("zhaoya") then
+				if damage.card and damage.card:isKindOf("Slash") and not damage.card:isKindOf("NatureSlash") and not (damage.chain or damage.transfer) and player:hasFlag("zhaoya") then
 					return self:objectName()
 				end
 			end
@@ -2891,7 +2897,7 @@ Mkuangwu = sgs.CreateTriggerSkill{
 				slash:setSkillName(self:objectName())
 				local targets = sgs.SPlayerList()
 				for _, p in sgs.qlist(room:getOtherPlayers(player)) do
-					if p:hasShownOneGeneral() and player:inMyAttackRange(p) and not (player:isFriendWith(p) or player:willBeFriendWith(p)) and player:canSlash(p,slash,false) and player:getHp() < p:getHp() then
+					if p:hasShownOneGeneral() and player:inMyAttackRange(p) and not (player:isFriendWith(p) or player:willBeFriendWith(p)) and player:canSlash(p,slash,false) and player:getHp() <= p:getHp() then
 						targets:append(p)
 					end
 				end
@@ -2917,7 +2923,7 @@ Mkuangwu = sgs.CreateTriggerSkill{
 		slash:setSkillName(self:objectName())
 		local targets = sgs.SPlayerList()
 		for _, p in sgs.qlist(room:getOtherPlayers(player)) do
-			if p:hasShownOneGeneral() and player:inMyAttackRange(p) and not (player:isFriendWith(p) or player:willBeFriendWith(p)) and player:canSlash(p,slash,false) and player:getHp() < p:getHp() then
+			if p:hasShownOneGeneral() and player:inMyAttackRange(p) and not (player:isFriendWith(p) or player:willBeFriendWith(p)) and player:canSlash(p,slash,false) and player:getHp() <= p:getHp() then
 				targets:append(p)
 			end
 		end
@@ -2940,12 +2946,12 @@ sgs.LoadTranslationTable{
 	["$Mzhaoya1"] = "四分五裂！",
 	["$Mzhaoya2"] = "徒劳无功。",
 	["$Mzhaoya3"] = "撕碎！",
-	[":Mzhaoya"] = "当你使用的【杀】被【闪】抵消后，你可以摸一张牌，若如此做，你须对其再使用一张【杀】且此【杀】造成的伤害+1，否则对方弃置你一张牌。",
+	[":Mzhaoya"] = "当你使用的普通【杀】被【闪】抵消后，你可以摸一张牌，若如此做，你须对其再使用一张【杀】且此【杀】造成的伤害+1，否则对方弃置你一张牌。",
 	["@zhaoya_slash"] = "是否对目标使用一张【杀】（该【杀】伤害+1）？",
 	["Mkuangwu"] = "狂舞",
 	["$Mkuangwu"] = "我的利爪在你的血泊中沐浴！",
 	["@kuangwu_use"] = "狂舞使用",
-	[":Mkuangwu"] = "限定技，弃牌阶段开始时，若你装备区有武器和防具，你可以弃置该防具视为对攻击范围内体力大于你的其他势力角色使用了一张【杀】。",
+	[":Mkuangwu"] = "限定技，弃牌阶段开始时，若你装备区有武器和防具，你可以弃置该防具视为对攻击范围内体力不小于你的其他势力角色使用了一张【杀】。",
 	["~Mpanther"] = "我命在旦夕！",
 	["cv:Mpanther"] = "狼人",
 	["illustrator:Mpanther"] = "英雄无敌6",

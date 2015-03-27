@@ -236,6 +236,20 @@ end
     【皇家狮鹫】
 ]]--
 --反击
+sgs.ai_skill_invoke["Mfanji"] = function(self, data)
+	local damage = data:toDamage()
+	local slash = sgs.cloneCard("slash")
+	local invoke = false
+	if self:isEnemy(damage.from) then
+	    if self:slashIsEffective(slash, damage.from) and self:damageIsEffective(damage.from, sgs.DamageStruct_Normal, self.player) and not self:slashProhibit(slash, damage.from) and not (damage.from:hasArmorEffect("Vine") and not self.player:hasWeapon("Fan")) then
+		    invoke = true
+		end
+	end
+	if invoke then
+	    return true
+	end
+	return false
+end
 sgs.ai_skill_cardask["@fanji_invoke"] = function(self, data)
     local basic
 	local invoke = false
@@ -921,7 +935,7 @@ sgs.ai_skill_invoke["Mkuangwu"] = function(self, data)
 	local slash = sgs.cloneCard("slash")
 	local x = 0
     for _, p in sgs.qlist(self.room:getOtherPlayers(self.player)) do
-	    if p:hasShownOneGeneral() and not (self.player:isFriendWith(p) or self.player:willBeFriendWith(p)) and p:getHp() > self.player:getHp() and self.player:inMyAttackRange(p) and self:slashIsEffective(slash, p) and not self:slashProhibit(slash, p) and self:damageIsEffective(p, sgs.DamageStruct_Normal, self.player) and not (p:hasArmorEffect("Vine") and not self.player:hasWeapon("Fan")) then
+	    if p:hasShownOneGeneral() and not (self.player:isFriendWith(p) or self.player:willBeFriendWith(p)) and p:getHp() >= self.player:getHp() and self.player:inMyAttackRange(p) and self:slashIsEffective(slash, p) and not self:slashProhibit(slash, p) and self:damageIsEffective(p, sgs.DamageStruct_Normal, self.player) and not (p:hasArmorEffect("Vine") and not self.player:hasWeapon("Fan")) then
 			if self:isFriend(p) then
 				x = x-1
 			else
