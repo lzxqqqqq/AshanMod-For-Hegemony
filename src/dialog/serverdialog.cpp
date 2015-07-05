@@ -1,5 +1,5 @@
 /********************************************************************
-    Copyright (c) 2013-2014 - QSanguosha-Rara
+    Copyright (c) 2013-2015 - Mogara
 
     This file is part of QSanguosha-Hegemony.
 
@@ -15,7 +15,7 @@
 
     See the LICENSE file for more details.
 
-    QSanguosha-Rara
+    Mogara
     *********************************************************************/
 
 #include "serverdialog.h"
@@ -24,6 +24,7 @@
 #include "engine.h"
 #include "customassigndialog.h"
 #include "banlistdialog.h"
+#include "scenario.h"
 
 #include <QTabWidget>
 #include <QFormLayout>
@@ -37,8 +38,10 @@
 #include <QLabel>
 #include <QRadioButton>
 #include <QHostInfo>
+#include <QComboBox>
 
-static QLayout *HLay(QWidget *left, QWidget *right) {
+static QLayout *HLay(QWidget *left, QWidget *right)
+{
     QHBoxLayout *layout = new QHBoxLayout;
     layout->addWidget(left);
     layout->addWidget(right);
@@ -75,7 +78,8 @@ ServerDialog::ServerDialog(QWidget *parent)
 #endif
 }
 
-QWidget *ServerDialog::createBasicTab() {
+QWidget *ServerDialog::createBasicTab()
+{
     server_name_edit = new QLineEdit;
     server_name_edit->setText(Config.ServerName);
 
@@ -98,7 +102,7 @@ QWidget *ServerDialog::createBasicTab() {
     hegemony_maxchoice_label = new QLabel(tr("Upperlimit for hegemony"));
     hegemony_maxchoice_spinbox = new QSpinBox;
     hegemony_maxchoice_spinbox->setRange(5, 10); //M&M 增加选将上限防止崩溃
-    hegemony_maxchoice_spinbox->setValue(Config.value("HegemonyMaxChoice", 8).toInt());
+    hegemony_maxchoice_spinbox->setValue(Config.value("HegemonyMaxChoice", 7).toInt());
 #endif
 
     QPushButton *edit_button = new QPushButton(tr("Banlist ..."));
@@ -129,7 +133,8 @@ QWidget *ServerDialog::createBasicTab() {
 }
 
 #ifdef Q_OS_IOS
-QWidget *ServerDialog::createGameModeTab() {
+QWidget *ServerDialog::createGameModeTab()
+{
     QFormLayout *form_layout = new QFormLayout;
     form_layout->addRow(createGameModeBox());
 
@@ -139,7 +144,8 @@ QWidget *ServerDialog::createGameModeTab() {
 }
 #endif
 
-QWidget *ServerDialog::createPackageTab() {
+QWidget *ServerDialog::createPackageTab()
+{
     disable_lua_checkbox = new QCheckBox(tr("Disable Lua"));
     disable_lua_checkbox->setChecked(Config.DisableLua);
     disable_lua_checkbox->setToolTip(tr("<font color=%1>The setting takes effect after reboot</font>").arg(Config.SkillDescriptionInToolTipColor.name()));
@@ -206,7 +212,8 @@ QWidget *ServerDialog::createPackageTab() {
     return widget;
 }
 
-QWidget *ServerDialog::createAdvancedTab() {
+QWidget *ServerDialog::createAdvancedTab()
+{
     QVBoxLayout *layout = new QVBoxLayout;
 
     forbid_same_ip_checkbox = new QCheckBox(tr("Forbid same IP with multiple connection"));
@@ -248,7 +255,7 @@ QWidget *ServerDialog::createAdvancedTab() {
 
     port_edit = new QLineEdit;
     port_edit->setText(QString::number(Config.ServerPort));
-    port_edit->setValidator(new QIntValidator(1, 9999, port_edit));
+    port_edit->setValidator(new QIntValidator(1000, 65535, port_edit));
 
     layout->addLayout(HLay(forbid_same_ip_checkbox, disable_chat_checkbox));
     layout->addWidget(random_seat_checkbox);
@@ -269,7 +276,8 @@ QWidget *ServerDialog::createAdvancedTab() {
     return widget;
 }
 
-QWidget *ServerDialog::createConversionTab() {
+QWidget *ServerDialog::createConversionTab()
+{
     QVBoxLayout *layout = new QVBoxLayout;
 
     bool enable_lord = Config.value("EnableLordConvertion", true).toBool();
@@ -279,7 +287,7 @@ QWidget *ServerDialog::createConversionTab() {
     convert_ds_to_dp = new QCheckBox(tr("Convert DoubleSword to DragonPhoenix"));
     convert_ds_to_dp->setChecked(Config.value("CardConversions").toStringList().contains("DragonPhoenix") || enable_lord);
     convert_ds_to_dp->setDisabled(enable_lord);
-    
+
     convert_jf_to_ps = new QCheckBox(tr("Convert JingFan to PeaceSpell"));
     convert_jf_to_ps->setChecked(Config.value("CardConversions").toStringList().contains("PeaceSpell") || enable_lord);
     convert_jf_to_ps->setDisabled(enable_lord);
@@ -297,7 +305,8 @@ QWidget *ServerDialog::createConversionTab() {
     return widget;
 }
 
-QWidget *ServerDialog::createMiscTab() {
+QWidget *ServerDialog::createMiscTab()
+{
     game_start_spinbox = new QSpinBox;
     game_start_spinbox->setRange(0, 10);
     game_start_spinbox->setValue(Config.CountDownSeconds);
@@ -381,7 +390,8 @@ QWidget *ServerDialog::createMiscTab() {
 }
 
 #ifdef Q_OS_IOS
-QWidget *ServerDialog::createAiTab() {
+QWidget *ServerDialog::createAiTab()
+{
     QVBoxLayout *layout = new QVBoxLayout;
 
     forbid_adding_robot_checkbox = new QCheckBox(tr("Forbid adding robot"));
@@ -428,7 +438,8 @@ QWidget *ServerDialog::createAiTab() {
 #endif
 
 
-QGroupBox *ServerDialog::createGameModeBox() {
+QGroupBox *ServerDialog::createGameModeBox()
+{
     QGroupBox *mode_box = new QGroupBox(tr("Game mode"));
     mode_box->setParent(this);
     mode_group = new QButtonGroup(this);
@@ -451,16 +462,36 @@ QGroupBox *ServerDialog::createGameModeBox() {
             button->setChecked(true);
     }
 
-    //jiange defense
-    QRadioButton *jiange_defense = new QRadioButton(tr("Jiange Defense"));
-    jiange_defense->setObjectName("jiange_defense");
-    mode_group->addButton(jiange_defense);
+    // add scenario modes
+    QRadioButton *scenario_button = new QRadioButton(tr("Scenario mode"));
+    scenario_button->setObjectName("scenario");
+    mode_group->addButton(scenario_button);
+    item_list << scenario_button;
 
-    if (Config.GameMode == "jiange_defense")
-        jiange_defense->setChecked(true);
+    scenario_ComboBox = new QComboBox;
+    scenario_ComboBox->setFocusPolicy(Qt::WheelFocus);
+    scenario_ComboBox->setEnabled(scenario_button->isDown());
+    connect(scenario_button,&QRadioButton::toggled,scenario_ComboBox,&QComboBox::setEnabled);
+    QStringList names = Sanguosha->getModScenarioNames();
+    foreach (QString name, names) {
+        QString scenario_name = Sanguosha->translate(name);
+        const Scenario *scenario = Sanguosha->getScenario(name);
+        if (scenario){ //crash,sometimes.
+            QString text = tr("%1 (%2 persons)").arg(scenario_name).arg(scenario->getPlayerCount());
+            scenario_ComboBox->addItem(text,name);
+        }
+    }
+    item_list << scenario_ComboBox;
 
-    item_list << jiange_defense;
-
+    if (mode_group->checkedButton() == NULL) {
+        int index = names.indexOf(Config.GameMode);
+        if (index != -1) {
+            scenario_button->setChecked(true);
+            scenario_ComboBox->setCurrentIndex(index);
+        } else 
+            mode_group->buttons().first()->setChecked(true); // for Lua Scenario.
+    }
+    
     // ============
 
     QVBoxLayout *left = new QVBoxLayout;
@@ -474,8 +505,7 @@ QGroupBox *ServerDialog::createGameModeBox() {
         if (item->isWidgetType()) {
             QWidget *widget = qobject_cast<QWidget *>(item);
             side->addWidget(widget);
-        }
-        else {
+        } else {
             QLayout *item_layout = qobject_cast<QLayout *>(item);
             side->addLayout(item_layout);
         }
@@ -494,7 +524,8 @@ QGroupBox *ServerDialog::createGameModeBox() {
     return mode_box;
 }
 
-QLayout *ServerDialog::createButtonLayout() {
+QLayout *ServerDialog::createButtonLayout()
+{
     QHBoxLayout *button_layout = new QHBoxLayout;
     button_layout->addStretch();
 
@@ -503,14 +534,15 @@ QLayout *ServerDialog::createButtonLayout() {
 
     button_layout->addWidget(ok_button);
     button_layout->addWidget(cancel_button);
-   
+
     connect(ok_button, &QPushButton::clicked, this, &ServerDialog::onOkButtonClicked);
     connect(cancel_button, &QPushButton::clicked, this, &ServerDialog::reject);
 
     return button_layout;
 }
 
-void ServerDialog::onDetectButtonClicked() {
+void ServerDialog::onDetectButtonClicked()
+{
     QHostInfo vHostInfo = QHostInfo::fromName(QHostInfo::localHostName());
     QList<QHostAddress> vAddressList = vHostInfo.addresses();
     foreach (const QHostAddress &address, vAddressList) {
@@ -522,12 +554,14 @@ void ServerDialog::onDetectButtonClicked() {
     }
 }
 
-void ServerDialog::onOkButtonClicked() {
+void ServerDialog::onOkButtonClicked()
+{
     accept();
 }
 
 
-bool ServerDialog::config() {
+bool ServerDialog::config()
+{
     exec();
 
     if (result() != Accepted)
@@ -557,8 +591,14 @@ bool ServerDialog::config() {
     Config.LuckCardLimitation = luck_card_spinbox->value();
 
     // game mode
-    QString objname = mode_group->checkedButton()->objectName();
-    Config.GameMode = objname;
+
+    if (mode_group->checkedButton()) {
+        QString objname = mode_group->checkedButton()->objectName();
+        if (objname == "scenario")
+            Config.GameMode = scenario_ComboBox->itemData(scenario_ComboBox->currentIndex()).toString();
+        else
+            Config.GameMode = objname;
+    }
 
     Config.setValue("ServerName", Config.ServerName);
     Config.setValue("GameMode", Config.GameMode);
@@ -608,7 +648,8 @@ bool ServerDialog::config() {
     return true;
 }
 
-void ServerDialog::editBanlist() {
+void ServerDialog::editBanlist()
+{
     BanListDialog *dialog = new BanListDialog(this);
     dialog->exec();
 }

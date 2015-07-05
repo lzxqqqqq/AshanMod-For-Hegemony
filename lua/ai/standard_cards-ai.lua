@@ -1,5 +1,5 @@
 --[[********************************************************************
-	Copyright (c) 2013-2014 - QSanguosha-Rara
+	Copyright (c) 2013-2015 Mogara
 
   This file is part of QSanguosha-Hegemony.
 
@@ -15,7 +15,7 @@
 
   See the LICENSE file for more details.
 
-  QSanguosha-Rara
+  Mogara
 *********************************************************************]]
 
 function SmartAI:canAttack(enemy, attacker, nature)
@@ -197,7 +197,7 @@ function sgs.getDefenseSlash(player, self)
 		end
 		return true
 	end
-	if player:getHandcardNum() == 0 and isInPile() and not player:hasShownSkills("kongcheng") then
+	if player:getHandcardNum() == 0 and player:getHandPile():isEmpty() and not player:hasShownSkills("kongcheng") then
 		if player:getHp() <= 1 then defense = defense - 2.5 end
 		if player:getHp() == 2 then defense = defense - 1.5 end
 		if not hasEightDiagram then defense = defense - 2 end
@@ -1248,14 +1248,10 @@ function sgs.ai_cardsview.Spear(self, class_name, player, cards)
 				if sgs.cardIsVisible(c, player, self.player) and c:isKindOf("Slash") then continue end
 				table.insert(cards, c)
 			end
-			for _,pile in sgs.list(player:getPileNames())do
-				if pile:startsWith("&") or pile == "wooden_ox" then
-					for _, id in sgs.qlist(player:getPile(pile)) do
-						c = sgs.Sanguosha:getCard(id)
-						if sgs.cardIsVisible(c, player, self.player) and c:isKindOf("Slash") then continue end
-						table.insert(cards, c)
-					end
-				end
+			for _, id in sgs.qlist(player:getHandPile()) do
+				local c = sgs.Sanguosha:getCard(id)
+				if sgs.cardIsVisible(c, player, self.player) and c:isKindOf("Slash") then continue end
+				table.insert(cards, c)
 			end
 		end
 		if #cards < 2 then return {} end
@@ -1289,12 +1285,8 @@ function turnUse_spear(self, inclusive, skill_name)
 	if self.player:hasSkill("wusheng") then
 		local cards = self.player:getCards("he")
 		cards = sgs.QList2Table(cards)
-		for _,pile in sgs.list(self.player:getPileNames())do
-			if pile:startsWith("&") or pile == "wooden_ox" then
-				for _, id in sgs.qlist(self.player:getPile(pile)) do
-					table.insert(cards, sgs.Sanguosha:getCard(id))
-				end
-			end
+		for _, id in sgs.qlist(self.player:getHandPile()) do
+			table.insert(cards, sgs.Sanguosha:getCard(id))
 		end
 		for _, acard in ipairs(cards) do
 			if isCard("Slash", acard, self.player) then return end
@@ -2041,13 +2033,14 @@ function SmartAI:useCardSnatchOrDismantlement(card, use)
 						break
 					end
 				end
-
+				if not cardchosen and not enemy:isKongcheng() and enemy:getHandcardNum() < 3 and self:isWeak(enemy)
+					and (not self:needKongcheng(enemy) and enemy:getHandcardNum() == 1)
+					and (not isDiscard or self.player:canDiscard(enemy, "h")) then
+					cardchosen = self:getCardRandomly(enemy, "h")
+				end
 				if not cardchosen and enemy:getDefensiveHorse() and (not isDiscard or self.player:canDiscard(enemy, enemy:getDefensiveHorse():getEffectiveId())) then cardchosen = enemy:getDefensiveHorse():getEffectiveId() end
 				if not cardchosen and enemy:getArmor() and not self:needToThrowArmor(enemy) and (not isDiscard or self.player:canDiscard(enemy, enemy:getArmor():getEffectiveId())) then
 					cardchosen = enemy:getArmor():getEffectiveId()
-				end
-				if not cardchosen and not enemy:isKongcheng() and enemy:getHandcardNum() <= 3 and (not isDiscard or self.player:canDiscard(enemy, "h")) then
-					cardchosen = self:getCardRandomly(enemy, "h")
 				end
 
 				if cardchosen then
@@ -2448,7 +2441,7 @@ function SmartAI:enemiesContainsTrick(EnemyCount)
 
 	for _, enemy in ipairs(self.enemies) do
 		if enemy:containsTrick("indulgence") then
-			if not enemy:hasSkill("keji") and	(not zhanghe or self:playerGetRound(enemy) >= self:playerGetRound(zhanghe)) then
+			if not enemy:hasSkill("keji") and   (not zhanghe or self:playerGetRound(enemy) >= self:playerGetRound(zhanghe)) then
 				trick_all = trick_all + 1
 				if not temp_enemy or temp_enemy:objectName() ~= enemy:objectName() then
 					enemy_num = enemy_num + 1
@@ -3071,7 +3064,6 @@ function SmartAI:useCardBefriendAttacking(BefriendAttacking, use)
 				if use.to then use.to:append(to_select) end
 			end
 			--结束
-		end
 	end
 	if targets:isEmpty() then
 		for _, to_select in ipairs(players) do
