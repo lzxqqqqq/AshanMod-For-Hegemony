@@ -3064,6 +3064,7 @@ function SmartAI:useCardBefriendAttacking(BefriendAttacking, use)
 				if use.to then use.to:append(to_select) end
 			end
 			--结束
+		end
 	end
 	if targets:isEmpty() then
 		for _, to_select in ipairs(players) do
