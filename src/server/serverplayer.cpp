@@ -250,13 +250,39 @@ QList<int> ServerPlayer::forceToDiscard(int discard_num, bool include_equip, boo
     return to_discard;
 }
 
+QList<int> ServerPlayer::forceToDiscard(int discard_num, const QString &pattern, const QString &expand_pile, bool is_discard)
+{
+    QList<int> to_discard;
+    QList<const Card *> all_cards;
+    foreach (const Card *c, getCards("he")) {
+        if (Sanguosha->matchExpPattern(pattern, this, c))
+            all_cards << c;
+    }
+    foreach (const QString &pile,expand_pile.split(",")) {
+        foreach (int id, getPile(pile))
+            all_cards << Sanguosha->getCard(id);
+    }
+    qShuffle(all_cards);
+
+    for (int i = 0; i < all_cards.length(); i++) {
+        if (!is_discard || !isJilei(all_cards.at(i)))
+            to_discard << all_cards.at(i)->getId();
+        if (to_discard.length() == discard_num)
+            break;
+    }
+
+    return to_discard;
+}
+
 int ServerPlayer::aliveCount(bool includeRemoved) const
 {
     int n = room->alivePlayerCount();
-    if (!includeRemoved)
-        foreach(ServerPlayer *p, room->getAllPlayers())
-        if (p->isRemoved())
-            n--;
+    if (!includeRemoved) {
+        foreach (ServerPlayer *p, room->getAllPlayers()) {
+            if (p->isRemoved())
+                n--;
+        }
+    }
     return n;
 }
 
@@ -1368,9 +1394,9 @@ void ServerPlayer::showGeneral(bool head_general, bool trigger_event, bool sendL
         room->doBroadcastNotify(S_COMMAND_LOG_EVENT, arg);
         room->changePlayerGeneral(this, general_name);
 
-        sendSkillsToOthers();
 
         if (!property("Duanchang").toString().split(",").contains("head")) {
+            sendSkillsToOthers();
             foreach (const Skill *skill, getHeadSkillList()) {
                 if (skill->getFrequency() == Skill::Limited && !skill->getLimitMark().isEmpty() && (!skill->isLordSkill() || hasLordSkill(skill->objectName())) && hasShownSkill(skill)) {
                     JsonArray arg;
@@ -1474,9 +1500,9 @@ void ServerPlayer::showGeneral(bool head_general, bool trigger_event, bool sendL
         room->doBroadcastNotify(S_COMMAND_LOG_EVENT, arg);
         room->changePlayerGeneral2(this, general_name);
 
-        sendSkillsToOthers(false);
 
         if (!property("Duanchang").toString().split(",").contains("deputy")) {
+            sendSkillsToOthers(false);
             foreach (const Skill *skill, getDeputySkillList()) {
                 if (skill->getFrequency() == Skill::Limited && !skill->getLimitMark().isEmpty() && (!skill->isLordSkill() || hasLordSkill(skill->objectName())) && hasShownSkill(skill)) {
                     JsonArray arg;
@@ -1787,8 +1813,8 @@ void ServerPlayer::sendSkillsToOthers(bool head_skill /* = true */)
     QStringList names = room->getTag(objectName()).toStringList();
     if (names.isEmpty()) return;
 
-    QString general = head_skill ? names.first() : names.last();
-    foreach (const Skill *skill, Sanguosha->getGeneral(general)->getSkillList(true, head_skill)) {
+    const QList<const Skill *> skills = head_skill ? getHeadSkillList() : getDeputySkillList();
+    foreach (const Skill *skill, skills) {
         JsonArray args;
         args << QSanProtocol::S_GAME_EVENT_ADD_SKILL;
         args << objectName();
