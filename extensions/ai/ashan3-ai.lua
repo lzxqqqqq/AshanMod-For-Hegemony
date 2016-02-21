@@ -178,6 +178,23 @@ sgs.ai_skill_playerchosen["Mjiqu"] = function(self, targets)
 	end
 	return target
 end
+sgs.ai_skill_exchange["Mjiqu"] = function(self,pattern,max_num,min_num,expand_pile)
+	local to_exchange = {}
+	local least = min_num
+	local n = 0
+	local cards = sgs.QList2Table(self.player:getHandcards())
+	self:sortByUseValue(cards, true)
+	for _, card in ipairs(cards) do
+		if card then
+		    table.insert(to_exchange, card:getEffectiveId())
+			n = n+1
+			if n == least then
+				break
+			end
+		end
+	end
+	return  to_exchange
+end
 sgs.ai_playerchosen_intention["Mjiqu"] = 40
 --死亡
 sgs.ai_skill_cardask["@siwang_invoke"] = function(self, data)
@@ -219,7 +236,13 @@ end
     【吸血伯爵】
 ]]--
 --血握
-sgs.ai_skill_invoke["Mxuewo"] = true
+sgs.ai_skill_invoke["Mxuewo"] = function(self, data)
+	local damage = data:toDamage()
+	if damage.damge == 1 and self.player:hasSkills(sgs.masochism_skill) and not self.player:getLostHp() > 1 then
+		return false
+	end
+	return true
+end
 --时空
 sgs.ai_skill_invoke["Mshikong"] = function(self, data)
     local a = self.player:getMark("@xue")
@@ -396,6 +419,23 @@ sgs.ai_skill_use["@@Mnuyi"] = function(self, prompt)
 	end
 	return "."
 end
+sgs.ai_skill_exchange["Mnuyi"] = function(self,pattern,max_num,min_num,expand_pile)
+	local to_exchange = {}
+	local least = min_num
+	local n = 0
+	local cards = sgs.QList2Table(self.player:getHandcards())
+	self:sortByUseValue(cards, true)
+	for _, card in ipairs(cards) do
+		if card then
+		    table.insert(to_exchange, card:getEffectiveId())
+			n = n+1
+			if n == least then
+				break
+			end
+		end
+	end
+	return  to_exchange
+end
 sgs.ai_card_intention.MnuyiCard = 50
 --[[
     【亚莎】
@@ -489,6 +529,23 @@ sgs.ai_skill_invoke["Myuyue"] = function(self, data)
 		end
 	end
 	return false
+end
+sgs.ai_skill_exchange["Myuyue"] = function(self,pattern,max_num,min_num,expand_pile)
+	local to_exchange = {}
+	local least = min_num
+	local n = 0
+	local cards = sgs.QList2Table(self.player:getHandcards())
+	self:sortByUseValue(cards, true)
+	for _, card in ipairs(cards) do
+		if card then
+		    table.insert(to_exchange, card:getEffectiveId())
+			n = n+1
+			if n == least then
+				break
+			end
+		end
+	end
+	return  to_exchange
 end
 --诱惑
 sgs.ai_skill_invoke["Myouhuo"] = function(self, data)
@@ -642,6 +699,23 @@ sgs.ai_skill_invoke["Mbaoxing2"] = function(self, data)
 		return false
 	end
 	return true
+end
+sgs.ai_skill_exchange["Mbaoxing"] = function(self,pattern,max_num,min_num,expand_pile)
+	local to_exchange = {}
+	local least = min_num
+	local n = 0
+	local cards = sgs.QList2Table(self.player:getCards("he"))
+	self:sortByUseValue(cards, true)
+	for _, card in ipairs(cards) do
+		if card then
+		    table.insert(to_exchange, card:getEffectiveId())
+			n = n+1
+			if n == least then
+				break
+			end
+		end
+	end
+	return  to_exchange
 end
 --嘲弄（已添加至standard_cards-ai）
 sgs.ai_skill_cardask["@chaonong_invoke"] = function(self, data)

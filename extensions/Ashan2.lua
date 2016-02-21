@@ -14,6 +14,8 @@ sgs.LoadTranslationTable{
 --[[[******************
     创建架空势力【秘】
 ]]--[******************
+sgs.addNewKingdom("mi", "#5B5B5B")
+--[[
 do
     require  "lua.config" 
 	local config = config
@@ -21,6 +23,7 @@ do
             table.insert(kingdoms,"mi")
 	config.color_de = "#F5F5DC"
 end
+]]
 sgs.LoadTranslationTable{
 	["mi"] = "秘",
 }
@@ -1505,7 +1508,7 @@ sgs.LoadTranslationTable{
 Mhairyou = sgs.General(Ashan2, "Mhairyou", "mi", 3, false)
 --[[
 *【源泉】锁定技，当你进入濒死时，若你体力上限大于1，你减1点体力上限，然后回复体力至1并摸两张牌。锁定技，当你对攻击范围内的其他势力的角色造成一次雷属性伤害后，你增加1点体力上限。
-*【暴雪】当你对攻击范围内的角色造成一次无属性伤害后，你可以弃置一张锦囊牌然后选择一项：1.令其跳过下一次摸牌阶段；2.令其弃置一张手牌并跳过下一次出牌阶段；3.令其摸一张牌并跳过下一次弃牌阶段。
+*【暴雪】当你对攻击范围内的角色造成一次无属性伤害后，你可以弃置一张锦囊牌然后选择一项：1.令其跳过下一次摸牌阶段；2.令其弃置一张牌并跳过下一次出牌阶段；3.令其摸一张牌并跳过下一次弃牌阶段。
 *【凌云】主将技，锁定技，你的判定牌视为红桃K。主将技，锁定技，当你被其他角色指定为延时锦囊的目标时，你取消之。
 *【云迹】副将技，与你势力相同的角色摸牌阶段开始时，若其为被围攻角色，你可以令其将手牌数补充至围攻角色中的手牌数较大值。
 ]]--
@@ -1813,7 +1816,7 @@ sgs.LoadTranslationTable{
 	["#baoxue1"] = "%from 将跳过下一次摸牌阶段！",
 	["#baoxue2"] = "%from 将跳过下一次出牌阶段！",
 	["#baoxue3"] = "%from 将跳过下一次弃牌阶段！",
-	[":Mbaoxue"] = "当你对攻击范围内的角色造成一次无属性伤害后，你可以弃置一张锦囊牌然后选择一项：1.令其跳过下一次摸牌阶段；2.令其弃置一张手牌并跳过下一次出牌阶段；3.令其摸一张牌并跳过下一次弃牌阶段。",
+	[":Mbaoxue"] = "当你对攻击范围内的角色造成一次无属性伤害后，你可以弃置一张锦囊牌然后选择一项：1.令其跳过下一次摸牌阶段；2.令其弃置一张牌并跳过下一次出牌阶段；3.令其摸一张牌并跳过下一次弃牌阶段。",
 	["~Mhairyou"] = "剩下的只有沉默……",
 	["cv:Mhairyou"] = "卓尔游侠",
 	["illustrator:Mhairyou"] = "英雄无敌6",
@@ -3345,6 +3348,10 @@ Mlongxi = sgs.CreateTriggerSkill{
 		end
 		if not targets:isEmpty() then
 			local real_targets = sgs.SPlayerList()
+			real_targets = room:askForPlayersChosen(player, targets, self:objectName(), 0, x, "Mlongxi_choose", false)
+			room:sortByActionOrder(real_targets)
+--[[			
+			local real_targets = sgs.SPlayerList()
 			local m = 0
 			local target
 			while not targets:isEmpty() do
@@ -3369,6 +3376,7 @@ Mlongxi = sgs.CreateTriggerSkill{
 					room:setPlayerFlag(p, "-longxi_target")
 				end
 			end
+]]
 			if not real_targets:isEmpty() then
 				if x == 1 then
 					room:broadcastSkillInvoke(self:objectName(), 1)
@@ -3444,6 +3452,7 @@ sgs.LoadTranslationTable{
 	["$Mlongxi2"] = "灼烧吧！",
 	["$Mlongxi3"] = "在烈焰中倒下吧！",
 	[":Mlongxi"] = "出牌阶段开始时，若你手牌数大于体力，你可以弃置X张手牌指定至多X名攻击范围外的其他角色，视为你对他们使用了一张【火杀】（X为超出体力的牌数）。",
+	["Mlongxi_choose"] = "请选择被你愤怒的火焰淹没的蝼蚁吧！",
 	["Mlongwei"] = "龙威",
 	[":Mlongwei"] = "锁定技，若你已受伤，你与其他角色的距离+X，其他角色与你的距离+X（X为你已损失体力数且最大为2）。",
 	["Mlonglin"] = "龙麟",

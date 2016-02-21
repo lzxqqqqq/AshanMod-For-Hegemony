@@ -14,6 +14,8 @@ sgs.LoadTranslationTable{
 --[[[******************
     创建架空势力【英】
 ]]--[******************
+sgs.addNewKingdom("ying", "#990099")
+--[[
 do
     require  "lua.config" 
 	local config = config
@@ -21,6 +23,7 @@ do
             table.insert(kingdoms,"ying")
 	config.color_de = "#003366"
 end
+]]
 sgs.LoadTranslationTable{
 	["ying"] = "英",
 }
@@ -349,7 +352,7 @@ sgs.LoadTranslationTable{
 Mvestal = sgs.General(Ashan1, "Mvestal", "ying", 3, false)
 --[[
 *【治愈】摸牌阶段，你可以放弃摸牌，改为令一名已受伤的其他角色回复1点体力，然后你摸X张牌（X为其已损失体力且最多为2）。
-*【信仰】主将技，当你受到一次伤害后，你可以展示一张手牌进行一次判定：若结果与你展示的手牌颜色相同，你弃置该手牌并回复一点体力；否则你获得该判定牌。
+*【信仰】主将技，当你受到一次伤害后，你可以展示一张牌进行一次判定：若结果与你展示的牌花色相同，你回复1点体力；否则你弃置该牌然后获得该判定牌。
 *【平和】副将技，锁定技，当你使用【杀】对目标角色造成一次伤害后，若其与你势力不同，你弃置其一张手牌，若此时其手牌数不小于其体力，你回复1点体力否则摸一张牌。
 ]]--
 Mzhiyu = sgs.CreateTriggerSkill{
@@ -457,7 +460,7 @@ Mxinyang = sgs.CreateTriggerSkill{
 	can_preshow = true,
 	can_trigger = function(self, event, room, player, data)
 		if player and player:isAlive() and player:hasSkill(self:objectName()) then
-			if not player:isKongcheng() then
+			if not player:isNude() then
 				return self:objectName()
 			end
 		end
@@ -470,14 +473,18 @@ Mxinyang = sgs.CreateTriggerSkill{
 		return false
 	end,
 	on_effect = function(self,event,room,player,data)
-		local id = room:askForExchange(player, self:objectName(), 1, false, "xinyang_show"):getSubcards():first()
+		local id = room:askForExchange(player, self:objectName(), 1, 1, "xinyang_show", "", ""):getSubcards():first()
 		room:showCard(player, id)
 		local card = sgs.Sanguosha:getWrappedCard(id)
 		local judge = sgs.JudgeStruct()
-			if card:isRed() then
-				judge.pattern = ".|red|."
+			if card:getSuit() == sgs.Card_Spade then
+				judge.pattern = ".|spade|."
+			elseif card:getSuit() == sgs.Card_Heart then
+				judge.pattern = ".|heart|."
+			elseif card:getSuit() == sgs.Card_Club then
+				judge.pattern = ".|club|."
 			else
-				judge.pattern = ".|black|."
+				judge.pattern = ".|diamond|."
 			end
 			judge.good = true
 			judge.reason = self:objectName()
@@ -487,13 +494,13 @@ Mxinyang = sgs.CreateTriggerSkill{
 		room:judge(judge)
 		if judge:isGood() then
 			room:broadcastSkillInvoke(self:objectName(), 1)
-			room:throwCard(card, player, player)
 			local recover = sgs.RecoverStruct()
 				recover.who = player
 				recover.recover = 1
 			room:recover(player, recover)
 			room:notifySkillInvoked(player, self:objectName())
 		else
+			room:throwCard(card, player)
 			room:broadcastSkillInvoke(self:objectName(), 2)
 			player:obtainCard(judge.card, true)
 		end
@@ -521,7 +528,7 @@ sgs.LoadTranslationTable{
 	["xinyang_show"] = "请展示一张手牌。",
 	["$Mxinyang1"] = "这是天意！",
 	["$Mxinyang2"] = "怎么这样……",
-	[":Mxinyang"] = "主将技，当你受到一次伤害后，你可以展示一张手牌进行一次判定：若结果与你展示的手牌颜色相同，你弃置该手牌并回复一点体力；否则你获得该判定牌。",
+	[":Mxinyang"] = "主将技，当你受到一次伤害后，你可以展示一张牌进行一次判定：若结果与你展示的牌花色相同，你回复1点体力；否则你弃置该牌然后获得该判定牌。",
 	["~Mvestal"] = "我的心很痛……",
 	["cv:Mvestal"] = "魅惑魔女",
 	["illustrator:Mvestal"] = "英雄无敌6",
@@ -922,8 +929,8 @@ Mcrusader:addCompanion("Mmarksman")
 Mcrusader:addCompanion("Mcelestial")
 --[[
 【冲锋】锁定技，当你使用【杀】对目标角色造成一次伤害时，若其与你的距离大于1，此伤害+1。
-【荣光】副将技，当你处于濒死状态时，其他你所在队列里的角色可以弃置一张手牌并失去1点体力，令你回复1点体力。
-【神驹】主将技，锁定技，若与你势力相同的角色装备区有防御马，你与其他角色距离-1，摸牌阶段你额外摸一张牌。主将技，锁定技，若与你势力相同的角色装备区有进攻马，其他角色与你距离+1，你的手牌上限+2。
+【荣光】副将技，当你处于濒死状态时，其他你所在队列里的角色可以弃置一张手牌并失去1点体力，令你回复1点体力并摸一张牌。
+【神驹】主将技，锁定技，与你势力相同的角色装备区每有一张马，摸牌阶段你额外摸一张牌。主将技，每当你失去装备区里的马后，若你已受伤，你可以回复1点体力。
 ]]--
 Mchongfeng = sgs.CreateTriggerSkill{
 	name = "Mchongfeng",
@@ -993,6 +1000,7 @@ Mrongguang = sgs.CreateTriggerSkill{
 			recover.recover = 1
 		room:recover(dying.who, recover)
 		room:notifySkillInvoked(dying.who, self:objectName())
+		dying.who:drawCards(1)
 	end,
 }
 Mshenju = sgs.CreateDrawCardsSkill{
@@ -1002,14 +1010,23 @@ Mshenju = sgs.CreateDrawCardsSkill{
 	can_preshow = true,
 	can_trigger = function(self, event, room, player, data)
 		if player and player:isAlive() and player:hasSkill(self:objectName()) then
-			local shenju
+			local n = 0
 			for _,p in sgs.qlist(room:getAlivePlayers()) do
-				if p:getDefensiveHorse() and p:isFriendWith(player) then
-					shenju = true
-					break
+				if p:isFriendWith(player) then
+					if p:getDefensiveHorse()then
+						n = n+1
+						if p:getOffensiveHorse() then
+							n = n+1
+						end
+					else
+						if p:getOffensiveHorse() then
+							n = n+1
+						end
+					end
 				end
 			end
-			if shenju then
+			if n > 0 then
+				room:setPlayerMark(player, "shenju_draw", n)
 				return self:objectName()
 			end
 		end
@@ -1023,52 +1040,46 @@ Mshenju = sgs.CreateDrawCardsSkill{
 		return false
 	end,
 	draw_num_func = function(self,player,n)
-		return n+1
+		local m = player:getMark("shenju_draw")
+		player:setMark("shenju_draw", 0)
+		return n+m
 	end,
 }
-Mshenju_distance = sgs.CreateDistanceSkill{
-	name = "#Mshenju_distance",
-	correct_func = function(self, from, to)
-		if from:hasSkill("Mshenju") and from:hasShownSkill(Mshenju) then
-			local shenju
-			for _,p in sgs.qlist(from:getAliveSiblings()) do
-				if p:getDefensiveHorse() and p:isFriendWith(from) then
-					shenju = true
+Mshenju_recover = sgs.CreateTriggerSkill{
+	name = "#Mshenju_recover",
+	events = {sgs.CardsMoveOneTime},
+	frequency = sgs.Skill_Frequent,
+	relate_to_place = "head",
+	can_preshow = true,
+	can_trigger = function(self,event,room,player,data)
+		if not player or player:isDead() or not player:isWounded() or not player:hasSkill(self:objectName()) then return false end
+		local move = data:toMoveOneTime()
+		if move.from and move.from:objectName() == player:objectName() and move.from_places:contains(sgs.Player_PlaceEquip) then
+			local card_ids = sgs.IntList()
+			local invoke
+			for _,id in sgs.list(move.card_ids) do
+				if sgs.Sanguosha:getCard(id):isKindOf("DefensiveHorse") or sgs.Sanguosha:getCard(id):isKindOf("OffensiveHorse") then
+					invoke = true
 					break
 				end
 			end
-			if shenju then
-				return -1
-			end
-		end
-		if to:hasSkill("Mshenju") and to:hasShownSkill(Mshenju) then
-			local shenju
-			for _,p in sgs.qlist(to:getAliveSiblings()) do
-				if p:getOffensiveHorse() and p:isFriendWith(to) then
-					shenju = true
-					break
-				end
-			end
-			if shenju then
-				return 1
-			end
+			if invoke then return self:objectName() end
 		end
 	end,
-}
-Mshenju_max = sgs.CreateMaxCardsSkill{
-	name = "#Mshenju_max",
-	extra_func = function(self,player)
-		if player:hasSkill("Mshenju") and player:hasShownSkill(Mshenju) then
-			local shenju
-			for _,p in sgs.qlist(player:getAliveSiblings()) do
-				if p:getOffensiveHorse() and p:isFriendWith(player) then
-					shenju = true
-					break
-				end
-			end
-			if shenju then
-				return 2
-			end
+	on_cost = function(self,event,room,player,data)
+		if player:askForSkillInvoke(self:objectName(), data) then
+			room:broadcastSkillInvoke("Mshenju")
+			return true
+		end
+		return false
+	end,
+	on_effect = function(self,event,room,player,data)
+        if player:isWounded() then
+			local recover = sgs.RecoverStruct()
+				recover.who = player
+				recover.recover = 1
+			room:recover(player, recover)
+			room:notifySkillInvoked(player, self:objectName())
 		end
 	end,
 }
@@ -1076,10 +1087,8 @@ Mshenju_max = sgs.CreateMaxCardsSkill{
 Mcrusader:addSkill(Mchongfeng)
 Mcrusader:addSkill(Mrongguang)
 Mcrusader:addSkill(Mshenju)
-Mcrusader:addSkill(Mshenju_distance)
-Mcrusader:addSkill(Mshenju_max)
-Ashan1:insertRelatedSkills("Mshenju", "#Mshenju_distance")
-Ashan1:insertRelatedSkills("Mshenju", "#Mshenju_max")
+Mcrusader:addSkill(Mshenju_recover)
+Ashan1:insertRelatedSkills("Mshenju", "#Mshenju_recover")
 --翻译表
 sgs.LoadTranslationTable{
     ["Mcrusader"] = "烈日十字军",
@@ -1093,12 +1102,11 @@ sgs.LoadTranslationTable{
 	["$Mrongguang"] = "考验你的时刻到了！",
 	["@rongguang_invoke"] = "是否弃置一张手牌并失去1点体力发动技能“荣光”？",
 	["$rongguang"] = "考验你的时刻到了",
-	[":Mrongguang"] = "副将技，当你处于濒死状态时，其他你所在队列里的角色可以弃置一张手牌并失去1点体力，令你回复1点体力。",
+	[":Mrongguang"] = "副将技，当你处于濒死状态时，其他你所在队列里的角色可以弃置一张手牌并失去1点体力，令你回复1点体力并摸一张牌。",
 	["Mshenju"] = "神驹",
+	["#Mshenju_recover"] = "神驹",
 	["$Mshenju"] = "时刻准备！",
-	["#Mshenju_distance"] = "神驹",
-	["#Mshenju_max"] = "神驹",
-	[":Mshenju"] = "主将技，锁定技，若与你势力相同的角色装备区有防御马，你与其他角色距离-1，摸牌阶段你额外摸一张牌。主将技，锁定技，若与你势力相同的角色装备区有进攻马，其他角色与你距离+1，你的手牌上限+2。",
+	[":Mshenju"] = "主将技，锁定技，与你势力相同的角色装备区每有一张马，摸牌阶段你额外摸一张牌。主将技，每当你失去装备区里的马后，若你已受伤，你可以回复1点体力。",
 	["~Mcrusader"] = "骑士……陨落了！",
 	["cv:Mcrusader"] = "混沌骑士",
 	["illustrator:Mcrusader"] = "英雄无敌6",
@@ -1947,7 +1955,7 @@ Mtaocuan = sgs.CreateTriggerSkill{
 		if goblin:getHandcardNum() == 1 then
 			id = goblin:handCards():first()
 		else
-			id = room:askForExchange(goblin, self:objectName(), 1, false, "taocuan_push"):getSubcards():first()
+			id = room:askForExchange(goblin, self:objectName(), 1, 1, "taocuan_push", "", ".|.|.|hand"):getSubcards():first()
 		end
 		goblin:addToPile("tao", id)
 	end,
@@ -2484,10 +2492,10 @@ Mchuancheng = sgs.CreateTriggerSkill{
 	end,
 	on_effect = function(self, event, room, player, data)
 		local dream =  room:findPlayerBySkillName(self:objectName())
-		local card = room:askForExchange(player, self:objectName(), 1, false, "chuancheng_give")
+		local card = room:askForExchange(player, self:objectName(), 1, 1, "chuancheng_give", "", ".|.|.|hand")
 		dream:obtainCard(card, false)
 		if dream:getHandcardNum() > dream:getMaxHp() then
-			local return_card = room:askForExchange(dream, self:objectName(), 1, false)
+			local return_card = room:askForExchange(dream, self:objectName(), 1, 1, "chuancheng_re", "", ".|.|.|hand")
 			room:broadcastSkillInvoke(self:objectName(), 2)
 			player:obtainCard(return_card, false)
 		else
@@ -2597,6 +2605,7 @@ sgs.LoadTranslationTable{
 	["$Mchuancheng1"] = "力量增强了！",
 	["$Mchuancheng2"] = "正和我的心意。",
 	["chuancheng_give"] = "请交给对方一张手牌。",
+	["chuancheng_re"] = "请交还对方一张手牌。",
 	[":Mchuancheng"] = "主将技，与你相同势力的其他角色摸牌阶段开始时，其可以交给你一张手牌，若此时你的手牌数不大于体力上限，其摸一张牌，否则你须将一张手牌交给该角色。",
 	["Mmengxing"] = "梦行",
 	["$Mmengxing1"] = "让你自己暖和点~",
@@ -2706,7 +2715,7 @@ Mguibi = sgs.CreateTriggerSkill{
 				if player:getHandcardNum() == 1 then
 					id = player:handCards():first()
 				else
-					id = room:askForExchange(player, self:objectName(), 1, false, "guibi_push"):getSubcards():first()
+					id = room:askForExchange(player, self:objectName(), 1, 1, "guibi_push", "", ".|.|.|hand"):getSubcards():first()
 				end
 				player:addToPile("guibi", id)
 			end

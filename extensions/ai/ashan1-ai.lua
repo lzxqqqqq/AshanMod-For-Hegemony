@@ -225,6 +225,23 @@ sgs.ai_skill_invoke["Mpinghe"] = function(self, data)
 end
 --信仰
 sgs.ai_skill_invoke["Mxinyang"] = true
+sgs.ai_skill_exchange["Mxinyang"] = function(self,pattern,max_num,min_num,expand_pile)
+	local to_exchange = {}
+	local least = min_num
+	local n = 0
+	local cards = sgs.QList2Table(self.player:getCards("he"))
+	self:sortByUseValue(cards, true)
+	for _, card in ipairs(cards) do
+		if card then
+		    table.insert(to_exchange, card:getEffectiveId())
+			n = n+1
+			if n == least then
+				break
+			end
+		end
+	end
+	return  to_exchange
+end
 --需求
 sgs.ai_cardneed["Mzhiyu"] = function(to, card, self)
 	return to:getHandcardNum() < 3 and card:isKindOf("Jink")
@@ -422,6 +439,7 @@ sgs.ai_skill_cardask["@rongguang_invoke"] = function(self, data)
 end
 --神驹
 sgs.ai_skill_invoke["Mshenju"] = true
+sgs.ai_skill_invoke["#Mshenju_recover"] = true
 --[[
     【昊天使】
 ]]--
@@ -588,6 +606,23 @@ end
 ]]--
 --逃窜
 sgs.ai_skill_invoke["Mtaocuan"] = true
+sgs.ai_skill_exchange["Mtaocuan"] = function(self,pattern,max_num,min_num,expand_pile)
+	local to_exchange = {}
+	local least = min_num
+	local n = 0
+	local cards = sgs.QList2Table(self.player:getHandcards())
+	self:sortByUseValue(cards, true)
+	for _, card in ipairs(cards) do
+		if card then
+		    table.insert(to_exchange, card:getEffectiveId())
+			n = n+1
+			if n == least then
+				break
+			end
+		end
+	end
+	return  to_exchange
+end
 --狡黠
 sgs.ai_skill_invoke["Mjiaoxia"] = true
 --陷阱
@@ -817,6 +852,23 @@ sgs.ai_skill_invoke["Mtiandi"] = function(self, data)
 end
 --传承
 sgs.ai_skill_invoke["Mchuancheng"] = true
+sgs.ai_skill_exchange["Mchuancheng"] = function(self,pattern,max_num,min_num,expand_pile)
+	local to_exchange = {}
+	local least = min_num
+	local n = 0
+	local cards = sgs.QList2Table(self.player:getHandcards())
+	self:sortByUseValue(cards, true)
+	for _, card in ipairs(cards) do
+		if card then
+		    table.insert(to_exchange, card:getEffectiveId())
+			n = n+1
+			if n == least then
+				break
+			end
+		end
+	end
+	return  to_exchange
+end
 --梦行
 sgs.ai_skill_invoke["Mmengxing"] = function(self, data)
     local target
@@ -899,6 +951,23 @@ sgs.ai_skill_invoke["Mguibi_skill"] = function(self, data)
 		return true
 	end
 	return true
+end
+sgs.ai_skill_exchange["Mguibi"] = function(self,pattern,max_num,min_num,expand_pile)
+	local to_exchange = {}
+	local least = min_num
+	local n = 0
+	local cards = sgs.QList2Table(self.player:getHandcards())
+	self:sortByUseValue(cards, true)
+	for _, card in ipairs(cards) do
+		if card then
+		    table.insert(to_exchange, card:getEffectiveId())
+			n = n+1
+			if n == least then
+				break
+			end
+		end
+	end
+	return  to_exchange
 end
 sgs.ai_skill_choice["Mguibi"] = function(self, choices, data)
 	if self.player:hasFlag("guibi_a") then

@@ -14,6 +14,8 @@ sgs.LoadTranslationTable{
 --[[[******************
     创建架空势力【暗】
 ]]--[******************
+sgs.addNewKingdom("an", "#388E8E")
+--[[
 do
     require  "lua.config" 
 	local config = config
@@ -21,6 +23,7 @@ do
             table.insert(kingdoms,"an")
 	config.color_de = "#696969"
 end
+]]
 sgs.LoadTranslationTable{
 	["an"] = "暗",
 }
@@ -593,7 +596,7 @@ Mjiqu = sgs.CreateTriggerSkill{
 		if choice == "jiqu_get" then
 			room:broadcastSkillInvoke(self:objectName(), 1)
 			local target = room:askForPlayerChosen(player, targets1, self:objectName())
-			local id = room:askForExchange(target, self:objectName(), 1, false, "jiqu_give"):getSubcards():first()
+			local id = room:askForExchange(target, self:objectName(), 1, 1, "jiqu_give", "", ".|.|.|hand"):getSubcards():first()
 			room:obtainCard(player, id, true)
 		else
 			room:broadcastSkillInvoke(self:objectName(), 2)
@@ -872,7 +875,7 @@ sgs.LoadTranslationTable{
 ]]--
 Mvampire = sgs.General(Ashan3, "Mvampire", "an", 4)
 --[[
-*【血握】锁定技，当你受到一次伤害时，防止此伤害并获得1枚“血”标记。锁定技，出牌阶段，当你对距离2内一名其他角色造成一次伤害后，你移除1枚“血”标记并摸一张牌。锁定技，出牌阶段结束时时，你失去X点体力并移除所有“血”标记（X为你拥有的“血”标记数目）。
+*【血握】当你受到一次伤害时，你可以防止此伤害并获得1枚“血”标记。锁定技，出牌阶段，当你对距离2内一名其他角色造成一次伤害后，你移除1枚“血”标记并摸一张牌。锁定技，出牌阶段结束时时，你失去X点体力并移除所有“血”标记（X为你拥有的“血”标记数目）。
 *【时空】主将技，锁定技，此武将牌上单独的阴阳鱼个数-1。主将技，出牌阶段开始前，若你拥有“血”标记且装备区不为空，你可以弃置装备区所有牌并跳过出牌阶段，若如此做，移除所有“血”标记，直到下次出牌阶段开始前，当你被指定为基本牌的目标时，你取消之。
 ]]--
 Mvampire:setHeadMaxHpAdjustedValue(-1)
@@ -899,18 +902,18 @@ Mxuewo = sgs.CreateTriggerSkill{
 		return ""
 	end,
 	on_cost = function(self,event,room,player,data)
-		if player:hasShownSkill(self) or player:askForSkillInvoke(self:objectName(), data) then
-			room:notifySkillInvoked(player, self:objectName())
-			if event == sgs.DamageInflicted then
+		if event == sgs.DamageInflicted then
+			if player:askForSkillInvoke(self:objectName(), data) then
+				room:notifySkillInvoked(player, self:objectName())
 				room:broadcastSkillInvoke(self:objectName(), 1)
 				return true
-			elseif event == sgs.Damage then
-				room:broadcastSkillInvoke(self:objectName(), 2)
-				return true
-			else
-				room:broadcastSkillInvoke(self:objectName(), 3)
-				return true
 			end
+		elseif event == sgs.Damage then
+			room:broadcastSkillInvoke(self:objectName(), 2)
+			return true
+		else
+			room:broadcastSkillInvoke(self:objectName(), 3)
+			return true
 		end
 		return false
 	end,
@@ -1010,7 +1013,7 @@ sgs.LoadTranslationTable{
 	["$Mxuewo3"] = "不！",
 	["#xuewo"] = "%from 抑制住伤势！",
 	["@xue"] = "血",
-	[":Mxuewo"] = "锁定技，当你受到一次伤害时，防止此伤害并获得1枚“血”标记。锁定技，出牌阶段，当你对距离2内一名其他角色造成一次伤害后，你移除1枚“血”标记并摸一张牌。锁定技，出牌阶段结束时时，你失去X点体力并移除所有“血”标记（X为你拥有的“血”标记数目）。",
+	[":Mxuewo"] = "当你受到一次伤害时，你可以防止此伤害并获得1枚“血”标记。锁定技，出牌阶段，当你对距离2内一名其他角色造成一次伤害后，你移除1枚“血”标记并摸一张牌。锁定技，出牌阶段结束时时，你失去X点体力并移除所有“血”标记（X为你拥有的“血”标记数目）。",
 	["Mshikong"] = "时空",
 	["$Mshikong1"] = "休养生息，伺机再战！",
 	["$Mshikong2"] = "哈……摄点血！",
@@ -1628,7 +1631,7 @@ Mnuyi = sgs.CreateTriggerSkill{
 						room:recover(player, recover)
 						room:broadcastSkillInvoke(self:objectName(), 2)
 					else
-						id = room:askForExchange(target, self:objectName(), 2, false, "nuyi_give", false)
+						id = room:askForExchange(target, self:objectName(), 2, 2, "nuyi_give", "", ".|.|.|hand")
 						room:obtainCard(player, id, false)
 						room:broadcastSkillInvoke(self:objectName(), 3)
 					end
@@ -1681,7 +1684,7 @@ sgs.LoadTranslationTable{
 	["nuyi_give"] = "请交给目标两张手牌。",
 	["@nuyi_invoke"] = "是否交给一名其他角色三张不同类型的牌发动技能“奴役”？",
 	["~Mnuyi"] = "选择三张不同类型的牌-点击确定。",
-	[":Mnuyi"] = "主将技，限定技，弃牌阶段开始时，若你已受伤，你可以正面朝上交给一名其他角色三张不同类型的牌，将其视为“龙仆”并回复1点体力。锁定技，当你受到一点伤害后，“龙仆”摸一张牌然后选择一项：1.交给你两张手牌；2.其失去1点体力使你回复1点体力。",
+	[":Mnuyi"] = "主将技，限定技，弃牌阶段开始时，若你已受伤，你可以正面朝上交给一名其他角色三张不同类型的牌，将其视为“龙仆”并回复1点体力。锁定技，当你受到一点伤害后，“龙仆”须摸一张牌然后交给你两张手牌，否则其失去1点体力使你回复1点体力。",
 	["~Mwraith"] = "又一次，心痛欲裂……",
 	["cv:Mwraith"] = "暗影恶魔",
 	["illustrator:Mwraith"] = "英雄无敌6",
@@ -2464,7 +2467,7 @@ Myuyue = sgs.CreateTriggerSkill{
 		if player:isWounded() then
 			room:broadcastSkillInvoke(self:objectName(), 2)
 		else
-			local id = room:askForExchange(player, self:objectName(), 1, false, "yuyue_throw"):getSubcards():first()
+			local id = room:askForExchange(player, self:objectName(), 1, 1, "yuyue_throw", "", ".|.|.|hand"):getSubcards():first()
 			room:broadcastSkillInvoke(self:objectName(), 1)
 			room:throwCard(id, player, player)
 		end
@@ -3112,7 +3115,7 @@ Mravager = sgs.General(Ashan3, "Mravager", "an", 4)
 --[[
 *【暴行】锁定技，你根据X的大小你获得以下效果（X为已损失体力）：
 	【X>0】锁定技，你的普通【杀】均视为【火杀】。
-	【X>1】锁定技，当你使用【杀】指定目标后，你弃置其一张牌:此【杀】被【闪】抵消后，其摸一张牌，然后你将一张手牌置于牌堆顶。
+	【X>1】锁定技，当你使用【杀】指定目标后，你弃置其一张牌:此【杀】被【闪】抵消后，其摸一张牌，然后你将一张牌置于牌堆顶。
 	【X>2】当你受到一次其他角色造成的伤害后，你可以摸一张牌并视为对伤害来源使用了一张【火杀】：若该【火杀】造成伤害，其无法使用基本牌直到其回合结束。
 *【冲撞】主将技，出牌阶段开始前，若你手牌数大于体力，你可以弃置两张（不足则为全部）手牌指定一名距离1内的其他势力的角色：若其打出一张【闪】，你跳过出牌阶段；否则你与其交换位置并对其造成1点伤害。
 *【嘲弄】副将技，锁定技，此武将牌上单独的阴阳鱼个数+1。副将技，当其他角色指定与你势力相同的其他角色为【杀】的目标时，若你在其攻击范围内，你可以展示一张基本牌并取消之：若如此做，其可以对你使用一张【杀】。
@@ -3176,9 +3179,9 @@ Mbaoxing = sgs.CreateTriggerSkill{
 					room:setPlayerFlag(effect.to, "-baoxing_target")
 					room:notifySkillInvoked(player, self:objectName())
 					effect.to:drawCards(1)
-					if not player:isKongcheng() then
+					if not player:isNude() then
 						room:broadcastSkillInvoke(self:objectName(), 3)
-						local id = room:askForExchange(player, self:objectName(), 1, false, "baoxing_put"):getSubcards():first()
+						local id = room:askForExchange(player, self:objectName(), 1, 1, "baoxing_put", "", ""):getSubcards():first()
 						local reason = sgs.CardMoveReason(sgs.CardMoveReason_S_REASON_PUT, player:objectName(),"", self:objectName(), "")
 						room:moveCardTo(sgs.Sanguosha:getCard(id), nil, nil, sgs.Player_DrawPile, reason, false)
 					end
@@ -3381,7 +3384,7 @@ sgs.LoadTranslationTable{
 	["$Mbaoxing4"] = "继续劈斩，继续咆哮！",
 	["$Mbaoxing5"] = "休想得到任何东西！",
 	["#baoxing"] = "%from 无法使用基本牌直到其回合结束。",
-	[":Mbaoxing"] = "锁定技，你根据X的大小你获得以下效果（X为已损失体力）：\n【X>0】\n锁定技，你的普通【杀】均视为【火杀】。\n【X>1】\n锁定技，当你使用【杀】指定目标后，你弃置其一张牌:此【杀】被【闪】抵消后，其摸一张牌，然后你将一张手牌置于牌堆顶。\n【X>2】\n当你受到一次其他角色造成的伤害后，你可以摸一张牌并视为对伤害来源使用了一张【火杀】：若该【火杀】造成伤害，其无法使用基本牌直到其回合结束。",
+	[":Mbaoxing"] = "锁定技，你根据X的大小你获得以下效果（X为已损失体力）：\n【X>0】\n锁定技，你的普通【杀】均视为【火杀】。\n【X>1】\n锁定技，当你使用【杀】指定目标后，你弃置其一张牌:此【杀】被【闪】抵消后，其摸一张牌，然后你将一张牌置于牌堆顶。\n【X>2】\n当你受到一次其他角色造成的伤害后，你可以摸一张牌并视为对伤害来源使用了一张【火杀】：若该【火杀】造成伤害，其无法使用基本牌直到其回合结束。",
 	["Mchongzhuang"] = "冲撞",
 	["@chongzhuang_invoke"] = "请打出一张【闪】否则将受到冲撞！",
 	["$Mchongzhuang1"] = "全都得死，你是第一个。",

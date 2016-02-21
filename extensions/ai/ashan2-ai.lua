@@ -731,11 +731,16 @@ sgs.ai_skill_invoke["Mlongxi"] = function(self, data)
 	    local slash = sgs.cloneCard("fire_slash")
 		local targets = sgs.QList2Table(self.room:getOtherPlayers(self.player))
 		self:sort(targets)
+		local m = 0
 		for _, p in ipairs(targets) do
 		    if not self.player:inMyAttackRange(p) and self:isEnemy(p) then
 				if self:slashIsEffective(slash, p) and self:damageIsEffective(p, sgs.DamageStruct_Fire, self.player) and not self:slashProhibit(slash, p) then
+					m = m+1
 					target = p
 					self.room:setPlayerFlag(p, "longxi_target")
+					if m == x then
+						break
+					end
 				end
 			end
 		end
@@ -746,20 +751,19 @@ sgs.ai_skill_invoke["Mlongxi"] = function(self, data)
 	return false
 end
 sgs.ai_skill_playerchosen["Mlongxi"] = function(self, targets)
-    local target
+	local result = {}
 	for _, p in sgs.qlist(self.room:getOtherPlayers(self.player)) do
 		if p:hasFlag("longxi_target") then
-		    target = p
 			self.room:setPlayerFlag(p, "-longxi_target")
-			break
+			table.insert(result,findPlayerByObjectName(p:objectName()))
 		end
 	end
-	if target then
-		return target
+	if #result > 0 then
+		return result
 	end
-	return nil
+	return {}
 end
-sgs.ai_playerchosen_intention["Mlongxi"] = 40
+--sgs.ai_playerchosen_intention["Mlongxi"] = 40
 --龙鳞
 sgs.ai_skill_invoke["Mlonglin"] = function(self, data)
 	local use = data:toCardUse()
