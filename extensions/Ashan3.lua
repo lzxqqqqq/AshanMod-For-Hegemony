@@ -1300,7 +1300,7 @@ sgs.LoadTranslationTable{
 ]]--
 Mwraith = sgs.General(Ashan3, "Mwraith", "an", 4)
 --[[
-【枯萎】锁定技，其他势力的角色死亡时，若你与其的距离为1且你已受伤，你回复1点体力，否则你与其余角色的距离-1。
+【枯萎】锁定技，其他势力的角色死亡时，若你已受伤，你回复1点体力，否则你与其余角色的距离-1。
 【衰老】结束阶段开始时，你可以弃置一张基本牌令一名攻击范围内已受伤其他角色进行一次判定：若结果为红桃，其摸一张牌；否则你摸一张牌且直到你下回合开始时其手牌上限-X（X为其已损失体力值）。
 *【奴役】主将技，限定技，弃牌阶段开始时，若你已受伤，你可以正面朝上交给一名其他角色三张不同类型的牌，将其视为“龙仆”并回复1点体力。锁定技，当你受到一点伤害后，“龙仆”摸一张牌然后选择一项：1.交给你两张手牌；2.其失去1点体力使你回复1点体力。
 *【永暗】副将技，准备阶段开始时，若你区域内没有牌，你可以弃置场上装备区所有牌。
@@ -1333,7 +1333,7 @@ Mkuwei = sgs.CreateTriggerSkill{
 			log.from = player
 		room:sendLog(log)
 		local death = data:toDeath()
-		if player:isWounded() and player:distanceTo(death.who) == 1 then
+		if player:isWounded() then
 			local Recover = sgs.RecoverStruct()
 			    Recover.recover = 1
 				Recover.who = player
@@ -1660,7 +1660,7 @@ sgs.LoadTranslationTable{
 	["$Mkuwei"] = "捕捉你的灵魂！",
 	["#kuwei"] = "%from 吸收了死者的灵魂！",
 	["@kuwei"] = "枯萎",
-	[":Mkuwei"] = "锁定技，其他势力的角色死亡时，若你与其的距离为1且你已受伤，你回复1点体力，否则你与其余角色的距离-1。",
+	[":Mkuwei"] = "锁定技，其他势力的角色死亡时，若你已受伤，你回复1点体力，否则你与其余角色的距离-1。",
 	["Mshuailao"] = "衰老",
 	["#Mshuailao_max"] = "衰老",
 	["$Mshuailao1"] = "你现在孤立无援！",
@@ -2606,7 +2606,7 @@ Mbreeder:addCompanion("Mlacerator")
 --[[
 *【增殖】锁定技，当你的体力发生一次变化前，你摸一张牌。锁定技，你的回合外,若你已受伤，每当你的手牌数变化后，若你的手牌数不为X，你须将手牌补至或弃置至X张（X为你已损失体力）。
 *【回归】副将技，当一名与你相同势力的其他角色进入濒死时，若你已受伤其可以令你回复1点体力，否则其可以令你将手牌数补充至体力上限，若如此做，该角色死亡（视为天灾）。
-*【繁衍】主将技，当你攻击范围内与你相同势力的其他角色死亡时，若其不为魔婴且你有手牌，你可以弃置所有手牌令其在死亡（你无视特殊模式带来的死亡惩罚）后复活为“魔婴/士兵”，然后其摸两张牌。
+*【繁衍】主将技，当与你相同势力的其他角色死亡时，若其不为魔婴且你手牌数不小于两张，你可以弃置所有手牌令其在死亡（你无视特殊模式带来的死亡惩罚）后复活为“魔婴/士兵”，然后其摸两张牌。
 ]]--
 Mzengzhi = sgs.CreateTriggerSkill{
 	name = "Mzengzhi",
@@ -2712,10 +2712,10 @@ Mfanyan = sgs.CreateTriggerSkill{
 	relate_to_place = "head",
 	can_preshow = true,
 	can_trigger = function(self, event, room, player, data)
-		if player and player:isAlive() and player:hasSkill(self:objectName()) and not player:isKongcheng() then
+		if player and player:isAlive() and player:hasSkill(self:objectName()) and player:getHandcardNum() > 1 then
 			local death = data:toDeath()
 			if death.who:objectName() ~= player:objectName() and death.who:hasShownOneGeneral() and (player:isFriendWith(death.who) or player:willBeFriendWith(death.who)) then
-				if death.who:getGeneralName() ~= "Mbug" and player:inMyAttackRange(death.who) then
+				if death.who:getGeneralName() ~= "Mbug" then
 					return self:objectName()
 				end
 			end
@@ -2780,7 +2780,7 @@ sgs.LoadTranslationTable{
 	[":Mzengzhi"] = "锁定技，当你的体力发生一次变化前，你摸一张牌。锁定技，你的回合外,若你已受伤，每当你的手牌数变化后，若你的手牌数不为X，你须将手牌补至或弃置至X张（X为你已损失体力）。",
 	["Mfanyan"] = "繁衍",
 	["$Mfanyan"] = "更多的嘴巴等着吃饭呢！",
-	[":Mfanyan"] = "主将技，当你攻击范围内与你相同势力的其他角色死亡时，若其不为魔婴且你有手牌，你可以弃置所有手牌令其在死亡（你无视特殊模式带来的死亡惩罚）后复活为“魔婴/士兵”，然后其摸两张牌。",
+	[":Mfanyan"] = "主将技，当与你相同势力的其他角色死亡时，若其不为魔婴且你手牌数不小于两张，你可以弃置所有手牌令其在死亡（你无视特殊模式带来的死亡惩罚）后复活为“魔婴/士兵”，然后其摸两张牌。",
 	["Mhuigui"] = "回归",
 	["$Mhuigui"] = "到妈妈这儿来！",
 	[":Mhuigui"] = "副将技，当一名与你相同势力的其他角色进入濒死时，若你已受伤其可以令你回复1点体力，否则其可以令你将手牌数补充至体力上限，若如此做，该角色死亡（视为天灾）。",
@@ -3408,7 +3408,7 @@ sgs.LoadTranslationTable{
 Mpitlord = sgs.General(Ashan3, "Mpitlord", "an", 4)
 --[[
 *【睚眦】当你受到其他角色使用【杀】造成的伤害后，你可以将牌堆顶一张牌置于其武将牌上称为“睚眦”。当你使用【杀】对其他角色造成一次伤害时，若其有“睚眦”牌，你可以展示牌堆顶上一张牌：若点数小于任意一张“睚眦”，你获得该牌；若点数大于任意一张“睚眦”，该伤害+1。锁定技，其他角色每有一张“睚眦”牌，你与其的距离-1。
-*【仇怨】主将技，限定技，出牌阶段结束时，若你于此阶段内未造成伤害且场上有大于一张“睚眦”，你可以视为对有“睚眦”的其他势力角色使用了一张【火杀】，然后弃置场上所有的“睚眦”。
+*【仇怨】主将技，限定技，出牌阶段结束时，若你于此阶段内未造成伤害且场上有大于一张“睚眦”，你可以视为对有“睚眦”的其他势力角色使用了一张【火杀】，然后弃置场上所有的“睚眦”并将手牌补充至体力上限。
 *【杀戮】副将技，当一名有“睚眦”的角色死亡时，你可以将手牌补充至体力上限并获得所有的“睚眦”牌。
 ]]--
 Myazi = sgs.CreateTriggerSkill{
@@ -3576,6 +3576,10 @@ Mchouyuan = sgs.CreateTriggerSkill{
 				p:clearOnePrivatePile("yazi")
 			end
 		end
+		local x = player:getMaxHp() - player:getHandcardNum()
+		if x > 0 then
+			player:drawCards(x)
+		end
 	end,
 }
 Mshalu = sgs.CreateTriggerSkill{
@@ -3643,7 +3647,7 @@ sgs.LoadTranslationTable{
 	["Mchouyuan"] = "仇怨",
 	["@chouyuan_use"] = "仇怨使用",
 	["$Mchouyuan"] = "罪恶之债，全额支付！",
-	[":Mchouyuan"] = "主将技，限定技，出牌阶段结束时，若你于此阶段内未造成伤害且场上有大于一张“睚眦”，你可以视为对有“睚眦”的其他势力角色使用了一张【火杀】，然后弃置场上所有的“睚眦”。",
+	[":Mchouyuan"] = "主将技，限定技，出牌阶段结束时，若你于此阶段内未造成伤害且场上有大于一张“睚眦”，你可以视为对有“睚眦”的其他势力角色使用了一张【火杀】，然后弃置场上所有的“睚眦”并将手牌补充至体力上限。",
 	["Mshalu"] = "杀戮",
 	["$Mshalu"] = "我撕开你的喉咙，只为闭上你的双眼。",
 	[":Mshalu"] = "副将技，当一名有“睚眦”的角色死亡时，你可以将手牌补充至体力上限并获得所有的“睚眦”牌。",

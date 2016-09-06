@@ -568,7 +568,7 @@ Mmizukami:addCompanion("Mkappa")
 Mmizukami:addCompanion("Myukionna")
 --[[
 【弱水】当你受到一次伤害后，你可以获得伤害来源一张手牌，若该牌点数在你当前手牌中不为最大或最小，你展示之，伤害来源失去1点体力。
-*【纯净】主将技，你的弃牌阶段外，当任意角色的牌置入弃牌堆时，若牌的数量多于你的手牌数且你有手牌，你可以获得之。
+*【纯净】主将技，你的弃牌阶段外，当任意数量的牌置入弃牌堆时，若牌的数量多于你的手牌数且你有手牌，你可以弃置一张手牌并获得之。
 *【羁绊】副将技，锁定技，此武将牌上单独的阴阳鱼个数+1。副将技，与你势力相同的角色回复一次体力后，你可以摸一张牌。
 ]]--
 Mruoshui = sgs.CreateTriggerSkill{
@@ -641,9 +641,11 @@ Mchunjing = sgs.CreateTriggerSkill{
 	end,
 	on_cost = function(self, event, room, player, data)
 		local mizukami = room:findPlayerBySkillName(self:objectName())
-		if room:askForSkillInvoke(mizukami, self:objectName(), data) then
-			room:broadcastSkillInvoke(self:objectName())
-			return true
+		if not mizukami:isKongcheng() then
+			if room:askForCard(mizukami, ".|.|.|hand", "@chunjing_invoke", data, sgs.Card_MethodDiscard) then
+				room:broadcastSkillInvoke(self:objectName())
+				return true
+			end
 		end
 		return false
 	end,
@@ -701,7 +703,8 @@ sgs.LoadTranslationTable{
 	[":Mruoshui"] = "当你受到一次伤害后，你可以获得伤害来源一张手牌，若该牌点数在你当前手牌中不为最大或最小，你展示之，伤害来源失去1点体力。",
 	["Mchunjing"] = "纯净",
 	["$Mchunjing"] = "终于等到了这一刻。",
-	[":Mchunjing"] = "主将技，你的弃牌阶段外，当任意角色的牌置入弃牌堆时，若牌的数量多于你的手牌数且你有手牌，你可以获得之。",
+	["@chunjing_invoke"] = "是否弃置一张手牌发动“纯净”？",
+	[":Mchunjing"] = "主将技，你的弃牌阶段外，当任意数量的牌置入弃牌堆时，若牌的数量多于你的手牌数且你有手牌，你可以弃置一张手牌并获得之。",
 	["Mjiban"] = "羁绊",
 	["$Mjiban"] = "死亡也无法阻止我们。",
 	[":Mjiban"] = "副将技，锁定技，此武将牌上单独的阴阳鱼个数+1。副将技，与你势力相同的角色回复一次体力后，你可以摸一张牌。",
@@ -1330,6 +1333,7 @@ Mkirin = sgs.General(Ashan2, "Mkirin", "mi", 5)
 *【根源】锁定技，当你进入濒死时，若你体力上限大于1，你减1点体力上限，然后回复体力至1并摸两张牌。
 【冰雹】当你使用【杀】对目标角色造成一次伤害时，你可以将其装备区所有牌返回至手牌，若如此做，此伤害+1。
 *【凌波】主将技，锁定技，判定阶段开始时，若你判定区不为空，你获得判定区所有牌，然后失去1点体力。
+**【凌波】主将技，锁定技，判定阶段开始前，若你判定区有且仅有一张牌，你跳过判定阶段；若你判定区有大于一张牌，你获得判定区的所有牌并失去1点体力，然后跳过判定、摸牌和出牌阶段。
 *【雾霭】副将技，锁定技，出牌阶段开始时，若你的手牌数少于X张，你将手牌补至X张，然后失去1点体力（X为当前场上与你势力相同的人数且最大为4）。
 ]]--
 Mgenyuan = sgs.CreateTriggerSkill{
@@ -1406,6 +1410,50 @@ Mbingbao = sgs.CreateTriggerSkill{
 Mlingbo = sgs.CreateTriggerSkill{
 	name = "Mlingbo", 
 	frequency = sgs.Skill_Compulsory, 
+	events = {sgs.EventPhaseChanging},
+	relate_to_place = "head",
+	can_preshow = true,
+	can_trigger = function(self, event, room, player, data)
+		if player and player:isAlive() and player:hasSkill(self:objectName()) then
+			local change = data:toPhaseChange()
+			if change.to == sgs.Player_Judge and not player:isSkipped(sgs.Player_Judge) then
+				local judges = player:getJudgingArea()
+				if judges:length() > 0 then
+					return self:objectName()
+				end
+			end
+		end
+		return ""
+	end,
+	on_cost = function(self,event,room,player,data)
+		if player:hasShownSkill(self) or player:askForSkillInvoke(self:objectName(), data) then
+			room:broadcastSkillInvoke(self:objectName())
+			room:notifySkillInvoked(player, self:objectName())
+			return true
+		end
+		return false
+	end,
+	on_effect = function(self,event,room,player,data)
+		local judges = player:getJudgingArea()
+		if judges:length() == 1 then
+			player:skip(sgs.Player_Judge)
+		elseif judges:length() > 1 then
+			local emptycard = MemptyCard:clone()
+			for _,card in sgs.qlist(player:getJudgingArea()) do
+				emptycard:addSubcard(card)
+			end
+			player:obtainCard(emptycard, true)
+			room:loseHp(player)
+			player:skip(sgs.Player_Judge)
+			player:skip(sgs.Player_Draw)
+			player:skip(sgs.Player_Play)
+		end
+	end,
+}
+--[[
+Mlingbo = sgs.CreateTriggerSkill{
+	name = "Mlingbo", 
+	frequency = sgs.Skill_Compulsory, 
 	events = {sgs.EventPhaseStart},
 	relate_to_place = "head",
 	can_preshow = true,
@@ -1437,6 +1485,7 @@ Mlingbo = sgs.CreateTriggerSkill{
 		room:loseHp(player)
 	end,
 }
+]]
 Mwuai = sgs.CreateTriggerSkill{
 	name = "Mwuai", 
 	frequency = sgs.Skill_Compulsory, 
@@ -1489,7 +1538,7 @@ sgs.LoadTranslationTable{
 	[":Mgenyuan"] = "锁定技，当你进入濒死时，若你体力上限大于1，你减1点体力上限，然后回复体力至1并摸两张牌。",
 	["Mlingbo"] = "凌波",
 	["$Mlingbo"] = "噢，这一刻我等很久了。",
-	[":Mlingbo"] = "主将技，锁定技，判定阶段开始时，若你判定区不为空，你获得判定区所有牌，然后失去1点体力。",
+	[":Mlingbo"] = "主将技，锁定技，判定阶段开始前，若你判定区有且仅有一张牌，你跳过判定阶段；若你判定区有大于一张牌，你获得判定区的所有牌并失去1点体力，然后跳过判定、摸牌和出牌阶段。",
 	["Mwuai"] = "雾霭",
 	["$Mwuai"] = "嗯，这就是霜冻的代价。",
 	[":Mwuai"] = "副将技，锁定技，出牌阶段开始时，若你的手牌数少于X张，你将手牌补至X张，然后失去1点体力（X为当前场上与你势力相同的人数且最大为4）。",
@@ -1833,7 +1882,7 @@ Mshalassa:addCompanion("Mhairyou")
 --[[
 *【波澜】君主技，锁定技，你拥有“宁静之心”。
 “宁静之心”与你势力相同的角色使用一张非延时锦囊指定目标后时，若其指定了大于一名目标，你可以摸一张牌并选择一项：1.该锦囊对与你相同势力的角色无效；2.该锦囊对与你不同势力的角色无效。
-【怒涛】你使用的非延时锦囊（【无懈可击】和【借刀杀人】除外）结算完毕后，你可以弃置一张相同颜色的锦囊牌，视为你对同一目标再次使用了此非延时锦囊。
+【怒涛】你使用的非延时锦囊（【无懈可击】、【借刀杀人】和【以逸待劳】除外）结算完毕后，你可以弃置一张相同颜色的锦囊牌，视为你对同一目标再次使用了此非延时锦囊。
 ]]--
 Mbolan = sgs.CreateTriggerSkill{ 
     name = "Mbolan$",
@@ -1937,7 +1986,7 @@ Mnutao = sgs.CreateTriggerSkill{
 		if player and player:isAlive() and player:hasSkill(self:objectName()) then
 			local use = data:toCardUse()
 			if player:objectName() == use.from:objectName() and not player:isKongcheng() and use.card:isNDTrick() then
-				if not (use.card:isKindOf("Nullification") or use.card:isKindOf("Collateral")) and (use.card:isRed() or use.card:isBlack()) then
+				if not (use.card:isKindOf("Nullification") or use.card:isKindOf("Collateral") or use.card:isKindOf("AwaitExhausted")) and (use.card:isRed() or use.card:isBlack()) then
 					local targets = sgs.SPlayerList() 
 					for _,p in sgs.qlist(use.to) do
 						if not player:isProhibited(p, use.card) then
@@ -2044,7 +2093,7 @@ sgs.LoadTranslationTable{
 	["$Mnutao"] = "死掉吧，就像爱一样，全都死掉吧！",
 	["@nutao_red"] = "是否弃置一张红色锦囊发动技能“怒涛”？",
 	["@nutao_black"] = "是否弃置一张黑色锦囊发动技能“怒涛”？",
-	[":Mnutao"] = "你使用的非延时锦囊（【无懈可击】和【借刀杀人】除外）结算完毕后，你可以弃置一张相同颜色的锦囊牌，视为你对同一目标再次使用了此非延时锦囊。",
+	[":Mnutao"] = "你使用的非延时锦囊（【无懈可击】、【借刀杀人】和【以逸待劳】除外）结算完毕后，你可以弃置一张相同颜色的锦囊牌，视为你对同一目标再次使用了此非延时锦囊。",
 	["~Mshalassa"] = "我的双眼变暗了。",
 	["cv:Mshalassa"] = "美杜莎",
 	["illustrator:Mshalassa"] = "英雄无敌6",
@@ -2376,7 +2425,7 @@ Mchakram = sgs.General(Ashan2, "Mchakram", "mi", 3, false)
 --珠联璧合：牛头卫士
 Mchakram:addCompanion("Mminotaur")
 --[[
-*【暗咒】当你对其他角色造成一次伤害后，若其在你的攻击范围内，你可以令其不能使用、打出或弃置锦囊牌直到其回合结束。
+*【暗咒】当你对其他角色造成一次伤害后，若其在你的攻击范围内，你可以令其不能使用或打出锦囊牌直到其回合结束。
 *【环舞】限定技，出牌阶段结束时，若你已受伤，你可以弃置一张武器牌视为对攻击范围内不含你的其他势力角色使用了一张附带毒属性的【杀】。锁定技，当你杀死一名其他角色后，若你发动过此技能，你重置此技能。
 ]]--
 Manzhou = sgs.CreateTriggerSkill{
@@ -2606,8 +2655,8 @@ sgs.LoadTranslationTable{
 	["@anzhou"] = "暗咒",
 	["$Manzhou1"] = "优雅的记号。",
 	["$Manzhou2"] = "噢不。",
-	["#anzhou"] = "由于 %arg 的效果，%from 无法打出、使用和弃置锦囊牌直到其回合结束！",
-	[":Manzhou"] = "当你对其他角色造成一次伤害后，你可以令其不能使用、打出或弃置锦囊牌直到其回合结束。",
+	["#anzhou"] = "由于 %arg 的效果，%from 无法使用或打出锦囊牌直到其回合结束！",
+	[":Manzhou"] = "当你对其他角色造成一次伤害后，你可以令其不能使用或打出锦囊牌直到其回合结束。",
 	["Mhuanwu"] = "环舞",
 	["#Mhuanwu_recover"] = "环舞",
 	["#Mhuanwu_effect"] = "中毒",

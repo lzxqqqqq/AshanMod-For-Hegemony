@@ -748,18 +748,18 @@ Mguangsu = sgs.CreateTriggerSkill{
 	end,
 	on_cost = function(self,event,room,player,data)
 		if player:askForSkillInvoke(self:objectName(), data) then
-			if player:getMark("@liming") > 0 then
-				room:broadcastSkillInvoke("Mliming", 4)
-			else
-				room:broadcastSkillInvoke(self:objectName())
-			end
 			return true
 		end
 		return false
 	end,
 	on_effect = function(self,event,room,player,data)
 		local jink = sgs.Sanguosha:cloneCard("jink")
-		jink:setSkillName(self:objectName())
+		if player:getMark("@liming") > 0 then
+			jink:setSkillName("Mliming4")
+			room:broadcastSkillInvoke("Mliming", 4)
+		else
+			jink:setSkillName(self:objectName())
+		end
 		room:provide(jink)
 		choice = room:askForChoice(player, self:objectName(), "gs_yes+gs_no", data)
 		if choice == "gs_yes" then
@@ -893,6 +893,7 @@ sgs.LoadTranslationTable{
 	["&Mblazing"] = "耀灵",
 	["#Mblazing"] = "闪烁之光",
 	["Mguangsu"] = "光速",
+	["Mliming4"] = "光速",
 	["gs_yes"] = "摸一张牌",
 	["gs_no"] = "不摸牌",
 	["$Mguangsu"] = "（嘲笑声）",

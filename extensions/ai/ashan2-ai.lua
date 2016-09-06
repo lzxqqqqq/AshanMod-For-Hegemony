@@ -134,7 +134,22 @@ sgs.ai_slash_prohibit["Mruoshui"] = function(self, from, to, card)
 	return false
 end
 --纯净
-sgs.ai_skill_invoke["Mchunjing"] = true
+sgs.ai_skill_cardask["@kuchu_invoke"] = function(self, data)
+	local has_card
+    local cards = sgs.QList2Table(self.player:getHandcards())
+	self:sortByUseValue(cards, true)
+	for _,cd in ipairs(cards) do
+	    if not cd:isKindOf("Peach") then
+		    has_card = cd
+			break
+		end
+	end
+	if has_card then
+	    return "$" .. has_card:getEffectiveId()
+	else
+	    return "."
+	end
+end
 --羁绊
 sgs.ai_skill_invoke["Mjiban"] = true
 --[[
@@ -274,7 +289,7 @@ sgs.ai_skill_invoke["Mbingbao"] = function(self, data)
 end
 --凌波
 sgs.ai_skill_invoke["Mlingbo"] = function(self, data)
-	if self:isWeak(self.player) then
+	if self:isWeak(self.player) and self.player:getJudgingArea():length() > 1 then
 		return false
 	end
 	return true
@@ -391,7 +406,7 @@ end
 --怒涛
 sgs.ai_skill_cardask["@nutao_red"] = function(self, data)
     local use = data:toCardUse()
-	if use.card:isKindOf("IronChain") then return "." end
+	if use.card:isKindOf("IronChain") or use.card:isKindOf("AwaitExhausted") or use.card:isKindOf("KnowBoth") then return "." end
 	local red_trick
 	local cards = sgs.QList2Table(self.player:getCards("h"))
 	self:sortByUseValue(cards, true)
