@@ -2305,7 +2305,9 @@ Mqianlin = sgs.CreateTriggerSkill{
 		return false
 	end,
 	on_effect = function(self, event, room, player, data)
+		math.random()
 		local x = math.min(2, player:getLostHp())
+		math.random()
 		local n = math.random(1, x+3)
 		if n == 1 or n == 2 then
 			room:broadcastSkillInvoke(self:objectName(), 1)
@@ -2939,6 +2941,7 @@ Mkuchu = sgs.CreateTriggerSkill{
 				end
 			end
 		elseif judge.card:getSuit() == sgs.Card_Diamond then
+			math.random()
 			room:broadcastSkillInvoke(self:objectName(), 3)
 			local n = math.random(1,3)
 			player:drawCards(n)

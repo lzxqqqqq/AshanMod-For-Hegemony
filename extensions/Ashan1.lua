@@ -212,7 +212,7 @@ sgs.LoadTranslationTable{
 Mmarksman = sgs.General(Ashan1, "Mmarksman", "ying", 3)
 --[[
 【神弩】锁定技，当你装备区没有武器时，你使用【杀】没有数量限制，否则你使用【杀】没有距离限制。
-【贯穿】当你使用【杀】对目标角色造成一次伤害后，你可以选择一项：1.弃置其装备区一张防具或马匹；2.若其下家不为你，视为你对其下家使用此【杀】。
+【贯穿】当你使用【杀】对目标角色造成一次伤害后，你可以选择一项：1.弃置其装备区一张防具或马匹；2.若其下家不为你且与你距离小于3，视为你对其下家使用此【杀】。
 ]]--
 Mshennu = sgs.CreateTargetModSkill{
 	name = "Mshennu",
@@ -241,7 +241,7 @@ Mguanchuan = sgs.CreateTriggerSkill{
 		if player and player:isAlive() and player:hasSkill(self:objectName()) then
 			local damage = data:toDamage()
 			if damage.card and damage.card:isKindOf("Slash") and not (damage.chain or damage.transfer) then
-				if (damage.to:isAlive() and (damage.to:getArmor() or damage.to:getDefensiveHorse() or damage.to:getOffensiveHorse())) or (damage.to:getNextAlive():objectName() ~= player:objectName() and player:canSlash(damage.to:getNextAlive(),damage.card,false)) then
+				if (damage.to:isAlive() and (damage.to:getArmor() or damage.to:getDefensiveHorse() or damage.to:getOffensiveHorse())) or (damage.to:getNextAlive():objectName() ~= player:objectName() and player:distanceTo(damage.to:getNextAlive()) < 3  and player:canSlash(damage.to:getNextAlive(),damage.card,false)) then
 					return self:objectName()
 				end
 			end
@@ -256,7 +256,7 @@ Mguanchuan = sgs.CreateTriggerSkill{
 	end,
 	on_effect = function(self,event,room,player,data)
 		local damage = data:toDamage()
-		if (damage.to:isAlive() and (damage.to:getArmor() or damage.to:getDefensiveHorse() or damage.to:getOffensiveHorse())) and (damage.to:getNextAlive():objectName() ~= player:objectName() and player:canSlash(damage.to:getNextAlive(),damage.card,false)) then
+		if (damage.to:isAlive() and (damage.to:getArmor() or damage.to:getDefensiveHorse() or damage.to:getOffensiveHorse())) and (damage.to:getNextAlive():objectName() ~= player:objectName() and player:distanceTo(damage.to:getNextAlive()) < 3 and player:canSlash(damage.to:getNextAlive(),damage.card,false)) then
 			choice = room:askForChoice(player, self:objectName(), "guan+chuan", data)
 		else
 			if damage.to:isAlive() and (damage.to:getArmor() or damage.to:getDefensiveHorse() or damage.to:getOffensiveHorse()) then
@@ -339,7 +339,7 @@ sgs.LoadTranslationTable{
 	["guan_armor"] = "防具",
 	["guan_def"] = "+1马",
 	["guan_off"] = "-1马",
-	[":Mguanchuan"] = "当你使用【杀】对目标角色造成一次伤害后，你可以选择一项：1.弃置其装备区一张防具或马匹；2.若其下家不为自己，视为你对其下家使用此【杀】。",
+	[":Mguanchuan"] = "当你使用【杀】对目标角色造成一次伤害后，你可以选择一项：1.弃置其装备区一张防具或马匹；2.若其下家不为你且与你距离小于3，视为你对其下家使用此【杀】。",
 	["~Mmarksman"] = "虽死犹荣！",
 	["cv:Mmarksman"] = "敌法师",
 	["illustrator:Mmarksman"] = "英雄无敌6",
