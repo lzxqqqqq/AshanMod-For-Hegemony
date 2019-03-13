@@ -114,24 +114,26 @@ sgs.ai_skill_invoke["Mguanchuan"] = function(self, data)
 	local damage = data:toDamage()
 	local dest = damage.to:getNextAlive()
 	if self:isEnemy(dest) then
-	    if self:slashIsEffective(damage.card, dest) and not self:slashProhibit(damage.card, dest) then
-		    if damage.card:isKindOf"FireSlash" and self:damageIsEffective(dest, sgs.DamageStruct_Normal, self.player) then
-			    self.room:setPlayerFlag(self.player, "choice_chuan")
-				return true
-			elseif damage.card:isKindOf"ThunderSlash" and self:damageIsEffective(dest, sgs.DamageStruct_Thunder, self.player) then
-			    self.room:setPlayerFlag(self.player, "choice_chuan")
-				return true
-			else
-			    if self:damageIsEffective(dest, sgs.DamageStruct_Normal, self.player) and not (dest:hasArmorEffect("Vine") and not self.player:hasWeapon("Fan")) then
-				    self.room:setPlayerFlag(self.player, "choice_chuan")
+	    if self.player:distanceTo(dest) < 3 then
+			if self:slashIsEffective(damage.card, dest) and not self:slashProhibit(damage.card, dest) then
+				if damage.card:isKindOf"FireSlash" and self:damageIsEffective(dest, sgs.DamageStruct_Normal, self.player) then
+					self.room:setPlayerFlag(self.player, "choice_chuan")
 					return true
+				elseif damage.card:isKindOf"ThunderSlash" and self:damageIsEffective(dest, sgs.DamageStruct_Thunder, self.player) then
+					self.room:setPlayerFlag(self.player, "choice_chuan")
+					return true
+				else
+					if self:damageIsEffective(dest, sgs.DamageStruct_Normal, self.player) and not (dest:hasArmorEffect("Vine") and not self.player:hasWeapon("Fan")) then
+						self.room:setPlayerFlag(self.player, "choice_chuan")
+						return true
+					end
 				end
 			end
 		end
 	else
-	    if damage.to:isAlive() and damage.to:hasEquip() then
-	        if self:isFriend(damage.to) then
-			    if self:doNotDiscard(damage.to, "e") or damage.to:hasShownSkills(sgs.lose_equip_skill) or (damage.to:isWounded() and damage.to:getEquips():length() == 1 and damage.to:hasArmorEffect("SilverLion")) then
+		if damage.to:isAlive() and damage.to:hasEquip() then
+			if self:isFriend(damage.to) then
+				if self:doNotDiscard(damage.to, "e") or damage.to:hasShownSkills(sgs.lose_equip_skill) or (damage.to:isWounded() and damage.to:getEquips():length() == 1 and damage.to:hasArmorEffect("SilverLion")) then
 				    return true
 				end
 			else
@@ -439,7 +441,6 @@ sgs.ai_skill_cardask["@rongguang_invoke"] = function(self, data)
 end
 --神驹
 sgs.ai_skill_invoke["Mshenju"] = true
-sgs.ai_skill_invoke["#Mshenju_recover"] = true
 --[[
     【昊天使】
 ]]--

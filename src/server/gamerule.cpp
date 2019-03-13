@@ -440,7 +440,7 @@ bool GameRule::effect(TriggerEvent triggerEvent, Room *room, ServerPlayer *playe
             room->addPlayerHistory(player, ".");
 		// M&M 血洗模式规则4
 		if (player->getPhase() == Player::Start && player->getMark("@xuexi") > 0)
-			room->setPlayerMark(player, "@xuexi", player->getMark("@xuexi") - 1);
+			room->setPlayerMark(player, "@xuexi", 0);
 		//
         break;
     }

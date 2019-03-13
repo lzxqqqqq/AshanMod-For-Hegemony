@@ -406,7 +406,7 @@ end
 --怒涛
 sgs.ai_skill_cardask["@nutao_red"] = function(self, data)
     local use = data:toCardUse()
-	if use.card:isKindOf("IronChain") or use.card:isKindOf("AwaitExhausted") or use.card:isKindOf("KnowBoth") then return "." end
+	if use.card:isKindOf("IronChain") or use.card:isKindOf("AwaitExhausted") or use.card:isKindOf("KnowBoth") or (use.card:isKindOf("FireAttack") and self.player:getHandcardNum() < 4) then return "." end
 	local red_trick
 	local cards = sgs.QList2Table(self.player:getCards("h"))
 	self:sortByUseValue(cards, true)

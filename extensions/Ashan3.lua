@@ -1701,7 +1701,7 @@ Masha:addCompanion("Mwraith")
 --[[
 *【象征】君主技，锁定技，你拥有“亚莎之泪”。
 “亚莎之泪”锁定技，准备阶段结束时，你须选择一个新的形态（在选择前你视为拥有“创造之愿”）：
-创造之愿：锁定技，与你势力相同/不同的其他角色在出牌阶段结束时摸/弃置X张牌（X为其在出牌阶段内使用牌的次数且最大为2）。
+创造之愿：锁定技，与你势力相同/不同的其他角色在出牌阶段结束时摸/弃置X张牌（X为其在出牌阶段内使用基本牌的次数且最大为2）。
 平衡之心：与你势力相同/不同的角色出牌阶段开始时，若你有手牌，你可以令其将手牌补充/弃置到与你的手牌数相同。
 灭亡之曲：锁定技，其他势力的角色准备阶段开始时，若其体力值大于你，其进行一次判定：若为红桃，你摸一张牌；若为方块，其跳过摸牌阶段；若为梅花，其跳过出牌阶段；若为黑桃，其弃置等同于已损失体力数的手牌否则失去1点体力。
 *【秩序】其他角色结束阶段开始时，你可以将手牌补至X张（X为场上势力数且最大为3）。
@@ -1777,8 +1777,11 @@ Mchuangzao = sgs.CreateTriggerSkill{
 		if asha and asha:isAlive() and asha:hasShownSkill(Mxiangzheng) and asha:getMark("xiangzheng_balance") == 0 and asha:getMark("xiangzheng_death") == 0 and asha:getRole() ~= "careerist" then
 			if event == sgs.PreCardUsed then
 				if player:getPhase() == sgs.Player_Play and player:objectName() ~= asha:objectName() then
-					if player:hasShownOneGeneral() and player:getMark("create_use") < 2 then
-						room:addPlayerMark(player, "create_use", 1)
+					local use = data:toCardUse()
+					if use.card and use.card:isKindOf("BasicCard") then
+						if player:hasShownOneGeneral() and player:getMark("create_use") < 2 then
+							room:addPlayerMark(player, "create_use", 1)
+						end
 					end
 				end
 			elseif event == sgs.EventPhaseEnd then
@@ -2041,7 +2044,7 @@ sgs.LoadTranslationTable{
 	["$Mxiangzheng9"] = "别跟暗月作对！",
 	["$Mxiangzheng10"] = "夜幕降临。",
 	["$Mxiangzheng11"] = "星空，取你性命！",
-	[":Mxiangzheng"] = "君主技，锁定技，你拥有“亚莎之泪”。\n\n“亚莎之泪”\n锁定技，准备阶段结束时，你须选择一个新的形态（在选择前你视为拥有“创造之愿”）：\n【创造之愿】锁定技，与你势力相同/不同的其他角色在出牌阶段结束时摸/弃置X张牌（X为其在出牌阶段内使用牌的次数且最大为2）。\n【平衡之心】与你势力相同/不同的角色出牌阶段开始时，若你有手牌，你可以令其将手牌补充/弃置到与你的手牌数相同。\n【灭亡之曲】锁定技，其他势力的角色准备阶段开始时，若其体力值大于你，其进行一次判定：若为红桃，你摸一张牌；若为方块，其跳过摸牌阶段；若为梅花，其跳过出牌阶段；若为黑桃，其弃置等同于已损失体力数的手牌否则失去1点体力。",
+	[":Mxiangzheng"] = "君主技，锁定技，你拥有“亚莎之泪”。\n\n“亚莎之泪”\n锁定技，准备阶段结束时，你须选择一个新的形态（在选择前你视为拥有“创造之愿”）：\n【创造之愿】锁定技，与你势力相同/不同的其他角色在出牌阶段结束时摸/弃置X张牌（X为其在出牌阶段内使用基本牌的次数且最大为2）。\n【平衡之心】与你势力相同/不同的角色出牌阶段开始时，若你有手牌，你可以令其将手牌补充/弃置到与你的手牌数相同。\n【灭亡之曲】锁定技，其他势力的角色准备阶段开始时，若其体力值大于你，其进行一次判定：若为红桃，你摸一张牌；若为方块，其跳过摸牌阶段；若为梅花，其跳过出牌阶段；若为黑桃，其弃置等同于已损失体力数的手牌否则失去1点体力。",
 	["Mzhixu"] = "秩序",
 	["$Mzhixu"] = "又一轮月相开始了。",
 	[":Mzhixu"] = "其他角色结束阶段开始时，你可以将手牌补至X张（X为场上势力数且最大为3）。",
@@ -3136,10 +3139,10 @@ Mbaoxing_change = sgs.CreateFilterSkill{
 	    local id = card:getId()
 		local suit = card:getSuit()
 		local point = card:getNumber()
-		local peach = sgs.Sanguosha:cloneCard("fire_slash", suit, point)
-		peach:setSkillName("Mbaoxing")
+		local fire_slash = sgs.Sanguosha:cloneCard("fire_slash", suit, point)
+		fire_slash:setSkillName("Mbaoxing")
 		local vs_card = sgs.Sanguosha:getWrappedCard(id)
-		vs_card:takeOver(peach)
+		vs_card:takeOver(fire_slash)
 		return vs_card
 	end,
 }
@@ -3178,8 +3181,13 @@ Mbaoxing = sgs.CreateTriggerSkill{
 		elseif event == sgs.SlashMissed then
 			if player and player:isAlive() and player:hasSkill(self:objectName()) and player:hasShownSkill(self) and player:getLostHp() > 1 then
 				local effect = data:toSlashEffect()
-				if effect.to and effect.to:isAlive() and effect.to:hasFlag("baoxing_target") then
-					room:setPlayerFlag(effect.to, "-baoxing_target")
+				if effect.to and effect.to:isAlive() then
+					if effect.to:hasFlag("baoxing2_target") then
+						room:setPlayerFlag(effect.to, "-baoxing2_target")
+					end
+					if effect.to:hasFlag("baoxing3_target") then
+						room:setPlayerFlag(effect.to, "-baoxing3_target")
+					end
 					room:notifySkillInvoked(player, self:objectName())
 					effect.to:drawCards(1)
 					if not player:isNude() then
@@ -3192,8 +3200,8 @@ Mbaoxing = sgs.CreateTriggerSkill{
 			end
 		else
 			local damage = data:toDamage()
-			if damage.to and damage.to:isAlive() and damage.to:hasFlag("baoxing_target") and damage.card and damage.card:isKindOf("Slash") and damage.card:getSkillName(false) == "baoxing_slash" and damage.to:getMark("baoxing") == 0 then
-				room:setPlayerFlag(damage.to, "-baoxing_target")
+			if damage.to and damage.to:isAlive() and damage.to:hasFlag("baoxing3_target") and damage.card and damage.card:isKindOf("Slash") and damage.card:getSkillName(false) == "baoxing_slash" and damage.to:getMark("baoxing") == 0 then
+				room:setPlayerFlag(damage.to, "-baoxing3_target")
 				local ravager =  room:findPlayerBySkillName(self:objectName())
 				if ravager and ravager:isAlive() and ravager:hasShownSkill(self) and ravager:getLostHp() > 2 then
 					room:getThread():delay(1000)
@@ -3227,6 +3235,7 @@ Mbaoxing = sgs.CreateTriggerSkill{
 	end,
 	on_effect = function(self, event, room, target, data, player)
 		if event == sgs.TargetChosen then
+			room:setPlayerFlag(target, "baoxing2_target")
 			if target:isNude() then return false end
 			room:broadcastSkillInvoke(self:objectName(), 2)
 			local id = room:askForCardChosen(player, target, "he", self:objectName())
@@ -3238,7 +3247,7 @@ Mbaoxing = sgs.CreateTriggerSkill{
 			slash:setSkillName("baoxing_slash")
 			if player:canSlash(damage.from,slash,false) then
 				room:broadcastSkillInvoke(self:objectName(), 4)
-				room:setPlayerFlag(damage.from, "baoxing_target")
+				room:setPlayerFlag(damage.from, "baoxing3_target")
 				local use = sgs.CardUseStruct()
 					use.from = player
 					use.to:append(damage.from)
@@ -3412,7 +3421,7 @@ Mpitlord = sgs.General(Ashan3, "Mpitlord", "an", 4)
 --[[
 *【睚眦】当你受到其他角色使用【杀】造成的伤害后，你可以将牌堆顶一张牌置于其武将牌上称为“睚眦”。当你使用【杀】对其他角色造成一次伤害时，若其有“睚眦”牌，你可以展示牌堆顶上一张牌：若点数小于任意一张“睚眦”，你获得该牌；若点数大于任意一张“睚眦”，该伤害+1。锁定技，其他角色每有一张“睚眦”牌，你与其的距离-1。
 *【仇怨】主将技，限定技，出牌阶段结束时，若你于此阶段内未造成伤害且场上有大于一张“睚眦”，你可以视为对有“睚眦”的其他势力角色使用了一张【火杀】，然后弃置场上所有的“睚眦”并将手牌补充至体力上限。
-*【杀戮】副将技，当一名有“睚眦”的角色死亡时，你可以将手牌补充至体力上限并获得所有的“睚眦”牌。
+*【杀戮】副将技，当一名有“睚眦”的角色死亡时，你可以摸X张牌然后获得所有的“睚眦”牌（X为该角色拥有的“睚眦”牌数量）。
 ]]--
 Myazi = sgs.CreateTriggerSkill{
 	name = "Myazi",  
@@ -3613,10 +3622,7 @@ Mshalu = sgs.CreateTriggerSkill{
 		local death = data:toDeath()
 		local yazipile = death.who:getPile("yazi")
 		if yazipile:length() > 0 then
-			local x = player:getMaxHp() - player:getHandcardNum()
-			if x > 0 then
-				player:drawCards(x)
-			end
+			player:drawCards(yazipile:length())
 			local emptycard = MemptyCard:clone()
 			for _, id in sgs.qlist(yazipile) do
 				emptycard:addSubcard(sgs.Sanguosha:getCard(id))
@@ -3653,7 +3659,7 @@ sgs.LoadTranslationTable{
 	[":Mchouyuan"] = "主将技，限定技，出牌阶段结束时，若你于此阶段内未造成伤害且场上有大于一张“睚眦”，你可以视为对有“睚眦”的其他势力角色使用了一张【火杀】，然后弃置场上所有的“睚眦”并将手牌补充至体力上限。",
 	["Mshalu"] = "杀戮",
 	["$Mshalu"] = "我撕开你的喉咙，只为闭上你的双眼。",
-	[":Mshalu"] = "副将技，当一名有“睚眦”的角色死亡时，你可以将手牌补充至体力上限并获得所有的“睚眦”牌。",
+	[":Mshalu"] = "副将技，当一名有“睚眦”的角色死亡时，你可以摸X张牌然后获得所有的“睚眦”牌（X为该角色拥有的“睚眦”牌数量）",
 	["~Mpitlord"] = "七大丧钟为我而鸣！",
 	["cv:Mpitlord"] = "恐怖利刃",
 	["illustrator:Mpitlord"] = "英雄无敌6",

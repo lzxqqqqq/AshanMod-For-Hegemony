@@ -931,6 +931,7 @@ Mcrusader:addCompanion("Mcelestial")
 --[[
 【冲锋】锁定技，当你使用【杀】对目标角色造成一次伤害时，若其与你的距离大于1，此伤害+1。
 【荣光】副将技，当你处于濒死状态时，其他你所在队列里的角色可以弃置一张手牌并失去1点体力，令你回复1点体力并摸一张牌。
+*【神驹】主将技，与你势力相同的角色出牌阶段结束时，你可以摸X张牌（X为其装备区马的数量）。主将技，每当与你势力相同的角色失去装备区里的马后，若你已受伤，你可以回复1点体力。
 【神驹】主将技，锁定技，与你势力相同的角色装备区每有一张马，摸牌阶段你额外摸一张牌。主将技，每当你失去装备区里的马后，若你已受伤，你可以回复1点体力。
 ]]--
 Mchongfeng = sgs.CreateTriggerSkill{
@@ -1004,6 +1005,7 @@ Mrongguang = sgs.CreateTriggerSkill{
 		dying.who:drawCards(1)
 	end,
 }
+--[[
 Mshenju = sgs.CreateDrawCardsSkill{
 	name = "Mshenju",
 	frequency = sgs.Skill_Compulsory,
@@ -1046,41 +1048,71 @@ Mshenju = sgs.CreateDrawCardsSkill{
 		return n+m
 	end,
 }
-Mshenju_recover = sgs.CreateTriggerSkill{
-	name = "#Mshenju_recover",
-	events = {sgs.CardsMoveOneTime},
+]]
+Mshenju = sgs.CreateTriggerSkill{
+	name = "Mshenju",
+	events = {sgs.EventPhaseEnd, sgs.CardsMoveOneTime},
 	frequency = sgs.Skill_Frequent,
 	relate_to_place = "head",
 	can_preshow = true,
 	can_trigger = function(self,event,room,player,data)
-		if not player or player:isDead() or not player:isWounded() or not player:hasSkill(self:objectName()) then return false end
-		local move = data:toMoveOneTime()
-		if move.from and move.from:objectName() == player:objectName() and move.from_places:contains(sgs.Player_PlaceEquip) then
-			local card_ids = sgs.IntList()
-			local invoke
-			for _,id in sgs.list(move.card_ids) do
-				if sgs.Sanguosha:getCard(id):isKindOf("DefensiveHorse") or sgs.Sanguosha:getCard(id):isKindOf("OffensiveHorse") then
-					invoke = true
-					break
+		if event == sgs.EventPhaseEnd then
+			if player:getPhase() == sgs.Player_Play and player:hasShownOneGeneral() and (player:getDefensiveHorse() or player:getOffensiveHorse()) then
+				local crusader = room:findPlayerBySkillName(self:objectName())
+				if crusader and crusader:isAlive() then
+					if crusader:isFriendWith(player) or crusader:willBeFriendWith(player) then
+						return self:objectName(), crusader
+					end
 				end
 			end
-			if invoke then return self:objectName() end
+		else
+			if not (player and player:hasShownOneGeneral()) then return false end
+			local crusader = room:findPlayerBySkillName(self:objectName())
+			if not crusader or crusader:isDead() or not (crusader:isWounded() and (crusader:isFriendWith(player) or crusader:willBeFriendWith(player))) then return false end
+			local move = data:toMoveOneTime()
+			if move.from and move.from:objectName() == player:objectName() and move.from_places:contains(sgs.Player_PlaceEquip) then
+				local card_ids = sgs.IntList()
+				local invoke
+				for _,id in sgs.list(move.card_ids) do
+					if sgs.Sanguosha:getCard(id):isKindOf("DefensiveHorse") or sgs.Sanguosha:getCard(id):isKindOf("OffensiveHorse") then
+						invoke = true
+						break
+					end
+				end
+				if invoke then return self:objectName(), crusader end
+			end
 		end
 	end,
 	on_cost = function(self,event,room,player,data)
-		if player:askForSkillInvoke(self:objectName(), data) then
+		local crusader = room:findPlayerBySkillName(self:objectName())
+		if crusader:askForSkillInvoke(self:objectName(), data) then
 			room:broadcastSkillInvoke("Mshenju")
 			return true
 		end
 		return false
 	end,
 	on_effect = function(self,event,room,player,data)
-        if player:isWounded() then
-			local recover = sgs.RecoverStruct()
-				recover.who = player
-				recover.recover = 1
-			room:recover(player, recover)
-			room:notifySkillInvoked(player, self:objectName())
+		local crusader = room:findPlayerBySkillName(self:objectName())
+		if event == sgs.EventPhaseEnd then
+			local n = 0
+			if player:getDefensiveHorse() then
+				n = n+1
+			end
+			if player:getOffensiveHorse() then
+				n = n+1
+			end
+			if n > 0 then
+				crusader:drawCards(n)
+				room:notifySkillInvoked(crusader, self:objectName())
+			end
+		else
+			if crusader:isWounded() then
+				local recover = sgs.RecoverStruct()
+					recover.who = crusader
+					recover.recover = 1
+				room:recover(crusader, recover)
+				room:notifySkillInvoked(crusader, self:objectName())
+			end
 		end
 	end,
 }
@@ -1088,8 +1120,6 @@ Mshenju_recover = sgs.CreateTriggerSkill{
 Mcrusader:addSkill(Mchongfeng)
 Mcrusader:addSkill(Mrongguang)
 Mcrusader:addSkill(Mshenju)
-Mcrusader:addSkill(Mshenju_recover)
-Ashan1:insertRelatedSkills("Mshenju", "#Mshenju_recover")
 --翻译表
 sgs.LoadTranslationTable{
     ["Mcrusader"] = "烈日十字军",
@@ -1105,9 +1135,8 @@ sgs.LoadTranslationTable{
 	["$rongguang"] = "考验你的时刻到了",
 	[":Mrongguang"] = "副将技，当你处于濒死状态时，其他你所在队列里的角色可以弃置一张手牌并失去1点体力，令你回复1点体力并摸一张牌。",
 	["Mshenju"] = "神驹",
-	["#Mshenju_recover"] = "神驹",
 	["$Mshenju"] = "时刻准备！",
-	[":Mshenju"] = "主将技，锁定技，与你势力相同的角色装备区每有一张马，摸牌阶段你额外摸一张牌。主将技，每当你失去装备区里的马后，若你已受伤，你可以回复1点体力。",
+	[":Mshenju"] = "主将技，与你势力相同的角色出牌阶段结束时，你可以摸X张牌（X为其装备区马的数量）。主将技，每当与你势力相同的角色失去装备区里的马后，若你已受伤，你可以回复1点体力。",
 	["~Mcrusader"] = "骑士……陨落了！",
 	["cv:Mcrusader"] = "混沌骑士",
 	["illustrator:Mcrusader"] = "英雄无敌6",
